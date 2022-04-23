@@ -18,68 +18,67 @@ CreateMap();
         }
 }
 
-BaseToCords(){
+int* BaseToCords(int Base) {
 
-int BaseCords[2];
-int *CordEdit = BaseCords;
+    static int BaseCords[2];
+    int* CordEdit = BaseCords;
     // Changing Base numbers to actual map co-ordinates
-    switch(Base){
-        case 1;
+    switch (Base) {
+    case 1:
         *CordEdit = 13;
         *(CordEdit + 1) = 5;
         break;
-        case 2;
+    case 2:
         *CordEdit = 13;
         *(CordEdit + 1) = 7;
         break;
-        case 3;
+    case 3:
         *CordEdit = 13;
         *(CordEdit + 1) = 9;
         break;
-        case 4;
+    case 4:
         *CordEdit = 9;
         *(CordEdit + 1) = 13;
         break;
-        case 5;
+    case 5:
         *CordEdit = 7;
         *(CordEdit + 1) = 13;
         break;
-        case 6;
+    case 6:
         *CordEdit = 5;
         *(CordEdit + 1) = 13;
         break;
-        case 7;
+    case 7:
         *CordEdit = 1;
         *(CordEdit + 1) = 9;
         break;
-        case 8;
+    case 8:
         *CordEdit = 1;
         *(CordEdit + 1) = 7;
         break;
-        case 9;
+    case 9:
         *CordEdit = 1;
         *(CordEdit + 1) = 9;
         break;
-        case 10;
+    case 10:
         *CordEdit = 5;
         *(CordEdit + 1) = 1;
         break;
-        case 11;
+    case 11:
         *CordEdit = 7;
         *(CordEdit + 1) = 1;
         break;
-        case 12;
+    case 12:
         *CordEdit = 9;
         *(CordEdit + 1) = 1;
         break;
-    
-        default:
+
+    default:
         printf("Please input a base number between 1 and 12");
-}
-return BaseCords;
+    }
+    return BaseCords;
 }
 
-}
 
 MazeAlgorithm(){
 
