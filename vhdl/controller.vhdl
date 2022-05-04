@@ -16,6 +16,9 @@ entity controller is
 		sensor_m		: in	std_logic;
 		sensor_r		: in	std_logic;
 
+		-- route_straight	: in	std_logic; -- 1 to go straight
+		-- route_corner	: in	std_logic; -- 1 to turn left, 0 to turn right
+
 		count_in		: in	std_logic_vector (19 downto 0);
 		count_reset		: out	std_logic;
 
@@ -33,6 +36,9 @@ architecture sys_operator of controller is
 	-- ff means forward forward, sf means stop foward etc.
 	signal state, new_state: control_state;
 	constant twenty_ms: unsigned := to_unsigned(1000000, 20);
+
+	constant route_straight: std_logic := '0'; -- always left
+	constant route_corner: std_logic := '1';
 
 begin
 	-- Switch states
@@ -68,6 +74,18 @@ begin
 						new_state <= sf;
 					elsif sensor_l = '0' and sensor_m = '1' and sensor_r = '1' then
 						new_state <= rf;
+					elsif sensor_l = '0' and sensor_m = '0' and sensor_r = '0' then
+						if route_straight = '1' then
+							new_state <= ff;
+						else
+							if route_corner = '1' then -- go left always
+								new_state <= sf;
+							else
+								new_state <= fs;
+							end if;
+						end if;
+					elsif sensor_l = '1' and sensor_m = '1' and sensor_r = '1' then
+						new_state <= ff;
 					else
 						new_state <= ff;
 					end if;
