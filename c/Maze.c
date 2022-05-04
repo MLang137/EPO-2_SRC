@@ -1,10 +1,11 @@
 #include <stdio.h>
 
 int maze[14][14];
+int startdirection;
 int * BaseToCords(int Base);
 void CreateMap(void);
 void MazeAlgorithm(int SourceNode, 
-int Target);
+int Target;
 
 
 int main(){
@@ -19,84 +20,121 @@ CreateMap();
 }
 
 int* BaseToCords(int Base) {
-
-    static int BaseCords[2];
-    int* CordEdit = BaseCords;
+    int offset;
     // Changing Base numbers to actual map co-ordinates
     switch (Base) {
     case 1:
-        *CordEdit = 13;
-        *(CordEdit + 1) = 5;
+        offset = 187;
+        startdirection = 1;
         break;
     case 2:
-        *CordEdit = 13;
-        *(CordEdit + 1) = 7;
+        offset = 189;
+        startdirection = 1;
         break;
     case 3:
-        *CordEdit = 13;
-        *(CordEdit + 1) = 9;
+        offset = 191;
+        startdirection = 1;
         break;
     case 4:
-        *CordEdit = 9;
-        *(CordEdit + 1) = 13;
+        offset = 140;
+        startdirection = 4;
         break;
     case 5:
-        *CordEdit = 7;
-        *(CordEdit + 1) = 13;
+        offset = 112;
+        startdirection = 4;
         break;
     case 6:
-        *CordEdit = 5;
-        *(CordEdit + 1) = 13;
+        offset = 84;
+        startdirection = 4;
         break;
     case 7:
-        *CordEdit = 1;
-        *(CordEdit + 1) = 9;
+        offset = 24;
+        startdirection = 3;
         break;
     case 8:
-        *CordEdit = 1;
-        *(CordEdit + 1) = 7;
+        offset = 22;
+        startdirection = 3;
         break;
     case 9:
-        *CordEdit = 1;
-        *(CordEdit + 1) = 9;
+        offset = 20;
+        startdirection = 3;
         break;
     case 10:
-        *CordEdit = 5;
-        *(CordEdit + 1) = 1;
+        offset = 71;
+        startdirection = 2;
         break;
     case 11:
-        *CordEdit = 7;
-        *(CordEdit + 1) = 1;
+        offset = 99;
+        startdirection = 2;
         break;
     case 12:
-        *CordEdit = 9;
-        *(CordEdit + 1) = 1;
+        offset = 127;
+        startdirection = 2;
         break;
 
     default:
         printf("Please input a base number between 1 and 12");
     }
-    return BaseCords;
+    return offset;
 }
 
 
-MazeAlgorithm(){
+}
+void MazeAlgorithm(int Target, int Source){
+int *MazeEdit = *maze;
+bool edge = true;
+int direction; 
 
-printf()
+int TargetOffset = BaseToCords(Target);
+int StartOffset = BaseToCords(Source);
 
+*(MazeEdit + TargetOffset) = 1;
+int i = 1;
 
+pos = TargetOffset;
+int Yup = -14; // +y = offset - 14
+int Ydown = 14; // -y = offset + 14
+int Xup = 1; // +x = offset + 1
+int Xdown = -1;// -x = offset - 1
 
+if (startdirection = 1){
+    pos += Yup
+    *(MazeEdit + pos) = ++i;
+    pos += Yup
+    *(MazeEdit + pos) = ++i;  
 
+}
+if (startdirection = 2){
+    pos += Xdown
+    *(MazeEdit + pos) = ++i; 
+    pos += Xdown
+    *(MazeEdit + pos) = ++i; 
+}
+if (startdirection = 3){
+    pos += Ydown
+    *(MazeEdit + pos) = ++i; 
+    pos += Ydown
+    *(MazeEdit + pos) = ++i; 
+}
+if (startdirection == 4){
+    pos += Xup
+    *(MazeEdit + pos) = ++i; 
+        pos += Xup
+    *(MazeEdit + pos) = ++i; 
+}
 
+while(*(MazeEdit + StartOffset) == 0) {
+if(*(MazeEdit + TargetOffset + Yup) = 0 ){
+  
+} 
+}
 
 
 }
 
 
 
-
-
-CreateMap(){
+void CreateMap(void){
 int i,j;
 // Creating Map Full of -1
 for (i = 1; i <= 13; i++){
