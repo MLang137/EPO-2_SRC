@@ -1,3 +1,8 @@
+--	2022 EE1D21 Line-follower
+--	Mentor group B4, students:
+--	Matthijs Langenberg		5557313
+--	Maarten Oudijk			5595533
+
 library IEEE;
 use IEEE.std_logic_1164.all;
 use IEEE.numeric_std.all;
@@ -22,93 +27,97 @@ entity controller is
 	);
 end entity controller;
 
-architecture behavioural of controller is
+architecture sys_operator of controller is
+	
+	type control_state is (rst, ff, fs, fr, sf, rf);
+	-- ff means forward forward, sf means stop foward etc.
+	signal state, new_state: control_state;
+	constant twenty_ms: unsigned := to_unsigned(1000000, 20);
 
-	type controller_state is ( 	con_reset,
-					con_gentle_left,
-					con_gentle_right,
-					con_left,
-					con_right,
-					con_forward);
-
-signal state, new_state: controller_state;
 begin
-	process (clk)
+	-- Switch states
+	reg: process(clk)
+
 	begin
-		if (rising_edge (clk)) then 
-			if (reset = '1') then
-				state <= con_reset;
+		if rising_edge(clk) then
+			if reset = '1' then
+				state <= rst;
 			else
 				state <= new_state;
 			end if;
 		end if;
 	end process;
 
-	process(count_in,sensor_l,sensor_m, sensor_r)
+	-- Control outputs
+	fsm: process(clk)
+
 	begin
-		case state is
-			when con_reset =>
-				motor_l_reset <= '1';
-				motor_r_reset <= '1';
-				if(sensor_l ='0' and sensor_r ='1' and sensor_m = '0') then	--gently left
-					new_state <= con_gentle_left;
-				elsif(sensor_l ='1' and sensor_r ='0' and sensor_m = '0') then	--gently right
-					new_state <= con_gentle_right;
-				elsif(sensor_l ='0' and sensor_r ='1' and sensor_m = '1') then -- left
-					new_state <= con_left;
-				elsif(sensor_l ='1' and sensor_r ='0' and sensor_m = '1') then	--right
-					new_state <= con_right;
-				else 								--forward
-					new_state <= con_forward;	
-				end if;
-			when con_gentle_left =>
-				motor_r_reset <= '0';
-				motor_r_direction <= '0';
-				if(unsigned(count_in) > 1000000) then
-					new_state <= con_reset;
-				end if;
-			when con_gentle_right =>
-				motor_l_reset <= '0';
-				motor_l_direction <= '1';
-				if(unsigned(count_in) > 1000000) then
-					new_state <= con_reset;
-				end if;
-			when con_left =>
-				motor_l_reset <= '0';
-				motor_r_reset <= '0';
-				motor_l_direction <= '0';
-				motor_r_direction <= '0';
-				if(unsigned(count_in) > 1000000) then
-					new_state <= con_reset;
-				end if;
-			when con_right =>
-				motor_l_reset <= '0';
-				motor_r_reset <= '0';
-				motor_l_direction <= '1';
-				motor_r_direction <= '1';
-				if(unsigned(count_in) > 1000000) then
-					new_state <= con_reset;
-				end if;
-			when con_forward =>
-				motor_l_reset <= '0';
-				motor_r_reset <= '0';
-				motor_l_direction <= '1';
-				motor_r_direction <= '0';
-				if(unsigned(count_in) > 1000000) then
-					new_state <= con_reset;
-				end if;
-		end case;
-	end process;
-	process (reset, count_in)
-	begin
-		if(reset='1') then
-			count_reset <= '1';
-		else
-			count_reset <= '0';
-			if(unsigned(count_in) > 1000000) then
-				count_reset <= '1';
-			end if;
+		if rising_edge(clk) then
+			case state is
+				when rst =>
+					count_reset <= '1';
+					motor_l_direction <= '0';
+					motor_l_reset <= '1';
+					motor_r_direction <= '1';
+					motor_r_reset <= '1';
+					if sensor_l = '1' and sensor_m = '0' and sensor_r = '0' then
+						new_state <= fs;
+					elsif sensor_l = '1' and sensor_m = '1' and sensor_r = '0' then
+						new_state <= fr;
+					elsif sensor_l = '0' and sensor_m = '0' and sensor_r = '1' then
+						new_state <= sf;
+					elsif sensor_l = '0' and sensor_m = '1' and sensor_r = '1' then
+						new_state <= rf;
+					else
+						new_state <= ff;
+					end if;
+				when fs =>
+					count_reset <= '0';
+					motor_l_direction <= '1';
+					motor_l_reset <= '0';
+					motor_r_direction <= '0';
+					motor_r_reset <= '1';
+					if unsigned(count_in) >= twenty_ms then
+						new_state <= rst;
+					end if;
+				when fr =>
+					count_reset <= '0';
+					motor_l_direction <= '1';
+					motor_l_reset <= '0';
+					motor_r_direction <= '1';
+					motor_r_reset <= '0';
+					if unsigned(count_in) >= twenty_ms then
+						new_state <= rst;
+					end if;
+				when sf =>
+					count_reset <= '0';
+					motor_l_direction <= '0';
+					motor_l_reset <= '1';
+					motor_r_direction <= '0';
+					motor_r_reset <= '0';
+					if unsigned(count_in) >= twenty_ms then
+						new_state <= rst;
+					end if;
+				when rf =>
+					count_reset <= '0';
+					motor_l_direction <= '0';
+					motor_l_reset <= '0';
+					motor_r_direction <= '0';
+					motor_r_reset <= '0';
+					if unsigned(count_in) >= twenty_ms then
+						new_state <= rst;
+					end if;
+				when ff =>
+					count_reset <= '0';
+					motor_l_direction <= '1';
+					motor_l_reset <= '0';
+					motor_r_direction <= '0';
+					motor_r_reset <= '0';
+					if unsigned(count_in) >= twenty_ms then
+						new_state <= rst;
+					end if;
+			end case;
 		end if;
 	end process;
 
-end architecture behavioural;
+end architecture sys_operator;
