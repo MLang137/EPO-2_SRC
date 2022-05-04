@@ -16,6 +16,9 @@ entity robot is
 		--sensor_r_in     	: in    std_logic;
 		sensor				: in    std_logic_vector(2 downto 0);
 
+		-- route_straight		: in	std_logic; -- 1 to go straight
+		-- route_corner		: in	std_logic; -- 1 to turn left, 0 to turn right
+
 		motor_l_pwm     	: out   std_logic;
 		motor_r_pwm     	: out   std_logic
 	);
@@ -54,6 +57,9 @@ architecture structural of robot is
             sensor_l		: in	std_logic;
             sensor_m		: in	std_logic;
             sensor_r		: in	std_logic;
+
+			-- route_straight	: in	std_logic;
+			-- route_corner	: in	std_logic;
     
             count_in		: in	std_logic_vector (19 downto 0);
             count_reset		: out	std_logic;
@@ -86,7 +92,6 @@ architecture structural of robot is
 	-- Controller to timebase
 	signal cont_reset_tib: std_logic;
 
-
 begin
 	
 	tib: timebase port map	(
@@ -112,6 +117,9 @@ begin
 		sensor_l		=> buf_sensor_l_cont,
 		sensor_m		=> buf_sensor_m_cont,
 		sensor_r		=> buf_sensor_r_cont,
+
+		-- route_straight	=> route_straight,
+		-- route_corner	=> route_corner,
 
 		count_in		=> count,
 		count_reset		=> cont_reset_tib,
