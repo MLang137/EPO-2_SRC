@@ -9,7 +9,7 @@ void PrintMaze();
 
 int main(){
 CreateMap();
-MazeAlgorithm(12,4);
+MazeAlgorithm(6,2);
 PrintMaze();
         
 }
@@ -17,7 +17,7 @@ PrintMaze();
 void PrintMaze(){
      for (int i = 0; i < 13; i++){
         for (int j = 0; j < 13; j++){
-             printf( " %d \t ",maze[i][j]);
+             printf( "  %d \t ",maze[i][j]);
         }
         printf("\n");
         printf("\n");
@@ -102,11 +102,7 @@ int dil[4] = {0,-1,0,1};
 
 bool foundBranch;
 
-row = 4;
-col = 0;
-maze[4][0] = 1;
-
-for (q = 0; q < 100; q++){
+for (q = 0; q < 20; q++){
 foundBranch = false;
 for(j = 0; j < 4; j++){
 trow = row + dir[j];
@@ -126,11 +122,13 @@ if (j == 3){i++;}
 
 
 if (!foundBranch){
+    printf("Backtracking\n");
     for(j = 0; j < 4; j++){
         trow = row + dir[j];
         tcol = col + dil[j];
-        if (maze[trow][tcol] > 0 && !foundBranch){
-            if (maze[trow][tcol] < i){
+        if (maze[trow][tcol] > 0 && maze[trow][tcol] != -1){
+            if (maze[trow][tcol] < i--){
+                printf("i: %d\n",i);
                 row = trow;
                 col = tcol;
                 i  = maze[trow][tcol];

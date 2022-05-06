@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdbool.h>
+#include <stdlib.h>
 
 int maze[13][13];
 int BaseToCords(int Base);
@@ -17,7 +18,7 @@ PrintMaze();
 void PrintMaze(){
      for (int i = 0; i < 13; i++){
         for (int j = 0; j < 13; j++){
-             printf( " %d \t ",maze[i][j]);
+             printf( "  %d \t ",maze[i][j]);
         }
         printf("\n");
         printf("\n");
@@ -102,9 +103,8 @@ int dil[4] = {0,-1,0,1};
 
 bool foundBranch;
 
-row = 4;
-col = 0;
-maze[4][0] = 1;
+
+
 
 for (q = 0; q < 100; q++){
 foundBranch = false;
@@ -117,7 +117,7 @@ if(CheckCell(trow,tcol)){
         foundBranch = true;
         nrow = trow;
         ncol = tcol;
-        printf("Round Check: %d ----> tcol: %d, nCol: %d\n",q,tcol,ncol);
+        printf("Round Check: %d ----> tcol: %d, nCol: %d\n",q,ncol);
 
     } 
 }
@@ -125,11 +125,12 @@ if (j == 3){i++;}
 }
 
 
-if (!foundBranch){
+if (!foundBranch ){
+    printf("BACKTRACKING\n");
     for(j = 0; j < 4; j++){
         trow = row + dir[j];
         tcol = col + dil[j];
-        if (maze[trow][tcol] > 0 && !foundBranch){
+        if (maze[trow][tcol] > 0){
             if (maze[trow][tcol] < i){
                 row = trow;
                 col = tcol;
