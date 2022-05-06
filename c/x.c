@@ -22,6 +22,21 @@ printf("row: %d \n", row);
 
 }
 
+
+if (!foundBranch ){
+    printf("BACKTRACKING\n");
+    for(j = 0; j < 4; j++){
+        trow = row + dir[j];
+        tcol = col + dil[j];
+        if (maze[trow][tcol] > 0){
+            if (maze[trow][tcol] < i && CheckCell(trow,tcol)){
+                row = trow;
+                col = tcol;
+                i  = maze[trow][tcol];
+            } 
+         }
+    }
+}
 PrintMaze();
 
 
