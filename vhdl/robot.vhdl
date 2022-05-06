@@ -1,7 +1,5 @@
---	2022 EE1D21 Line-follower
---	Mentor group B4, students:
---	Matthijs Langenberg		5557313
---	Maarten Oudijk			5595533
+--	2022 EPO-2 Smart Robot Challenge
+--	Mentor group B4-2
 
 library IEEE;
 use IEEE.std_logic_1164.all;
@@ -11,13 +9,11 @@ entity robot is
 		clk         		: in    std_logic;
 		reset           	: in    std_logic;
 
-		--sensor_l_in     	: in    std_logic;
-		--sensor_m_in     	: in    std_logic;
-		--sensor_r_in     	: in    std_logic;
 		sensor				: in    std_logic_vector(2 downto 0);
 
-		-- route_straight		: in	std_logic; -- 1 to go straight
-		-- route_corner		: in	std_logic; -- 1 to turn left, 0 to turn right
+		route_straight		: in	std_logic; -- 1 to go straight
+		route_corner		: in	std_logic; -- 1 to turn left, 0 to turn right
+		mine					: in	std_logic;
 
 		motor_l_pwm     	: out   std_logic;
 		motor_r_pwm     	: out   std_logic
@@ -58,8 +54,9 @@ architecture structural of robot is
             sensor_m		: in	std_logic;
             sensor_r		: in	std_logic;
 
-			-- route_straight	: in	std_logic;
-			-- route_corner	: in	std_logic;
+				route_straight	: in	std_logic;
+				route_corner	: in	std_logic;
+				mine				: in	std_logic;
     
             count_in		: in	std_logic_vector (19 downto 0);
             count_reset		: out	std_logic;
@@ -118,8 +115,9 @@ begin
 		sensor_m		=> buf_sensor_m_cont,
 		sensor_r		=> buf_sensor_r_cont,
 
-		-- route_straight	=> route_straight,
-		-- route_corner	=> route_corner,
+		route_straight	=> route_straight,
+		route_corner	=> route_corner,
+		mine				=> mine,
 
 		count_in		=> count,
 		count_reset		=> cont_reset_tib,
