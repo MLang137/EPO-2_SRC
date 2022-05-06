@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdlib.h>
+#include <conio.h>
 
 int maze[13][13];
 int BaseToCords(int Base);
@@ -18,9 +19,9 @@ PrintMaze();
 void PrintMaze(){
      for (int i = 0; i < 13; i++){
         for (int j = 0; j < 13; j++){
-             printf( "  %d \t ",maze[i][j]);
+             printf( "  %d \t",maze[i][j]);
         }
-        printf("\n");
+        printf("\n"); 
         printf("\n");
     }
 }
@@ -105,8 +106,8 @@ bool foundBranch;
 
 
 
-
-for (q = 0; q < 100; q++){
+sizeof
+while(*(MazeEdit + StartOffset) == 0){
 foundBranch = false;
 for(j = 0; j < 4; j++){
 trow = row + dir[j];
@@ -117,29 +118,31 @@ if(CheckCell(trow,tcol)){
         foundBranch = true;
         nrow = trow;
         ncol = tcol;
-        printf("Round Check: %d ----> tcol: %d, nCol: %d\n",q,ncol);
-
+        i++;
+        break;
     } 
 }
-if (j == 3){i++;}
-}
 
+}
 
 if (!foundBranch ){
     printf("BACKTRACKING\n");
+
     for(j = 0; j < 4; j++){
+        i = maze[row][col] -1;
         trow = row + dir[j];
         tcol = col + dil[j];
-        if (maze[trow][tcol] > 0){
-            if (maze[trow][tcol] < i){
-                row = trow;
-                col = tcol;
+        printf("scanner : %d, i: %d\n", maze[trow][tcol], i--);
+        if (maze[trow][tcol] > i && CheckCell(trow,tcol)){
+                 printf("After if: tcol: %d, nC ol: %d\n",trow,tcol);
+                nrow = trow;
+                ncol = tcol;
                 i  = maze[trow][tcol];
-            } 
+            }
          }
-    }
-}   
-printf("Round: %d ----> Row: %d, Col: %d\n",q,row,ncol);
+            } 
+  
+
 row = nrow;
 col = ncol;
 
