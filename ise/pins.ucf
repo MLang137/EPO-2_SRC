@@ -1,8 +1,13 @@
-# Pin assignment, 04-05-2022
+# 2022 EPO-2 Smart Robot Challenge
+# Mentor group B4-2
+# Pin assignment, 06-05-2022
 NET "clk" LOC = B8;
-NET "reset" LOC = P11; # BTN3 (A7) used for reset now P11 (switch)
+NET "reset" LOC = P11; # BTN3 (A7) --> P11 (switch) used for reset now
 NET "sensor[0]" LOC = "B5" ;
 NET "sensor[1]" LOC = "J3" ;
 NET "sensor[2]" LOC = "A3" ;
 NET "motor_l_pwm" LOC = "A9" ; # servo left
 NET "motor_r_pwm" LOC = "B9" ; # servo right
+NET "route_straight" LOC = L3; # go straight
+NET "route_corner" LOC = K3; # take a corner
+NET "mine" LOC = B4; # mine detected
