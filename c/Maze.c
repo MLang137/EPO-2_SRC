@@ -1,155 +1,108 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdlib.h>
-#include <conio.h>
+#include <string.h>
+#define FULL 100
 
 int maze[13][13];
-int BaseToCords(int Base);
-void CreateMap(void);
-void MazeAlgorithm(int Source,int Target);
-void PrintMaze();
 
-int main(){
-CreateMap();
-MazeAlgorithm(12,4);
-PrintMaze();
-        
+struct Pos
+{
+    int x;
+    int y;
+}; typedef struct Pos Pos;
+
+struct node
+{
+    Pos pt;
+    int dist;
+
+    struct node *next;
+};
+typedef struct node node;
+
+struct queue
+{
+    int count;
+    node *front;
+    node *rear;
+};
+typedef struct queue queue;
+
+void initialize(queue *q)
+{
+    q->count = 0;
+    q->front = NULL;
+    q->rear = NULL;
 }
 
-void PrintMaze(){
-     for (int i = 0; i < 13; i++){
-        for (int j = 0; j < 13; j++){
-             printf( "  %d \t",maze[i][j]);
+int isempty(queue *q)
+{
+    return (q->rear == NULL);
+}
+
+void enqueue(queue *q, Pos point, int value)
+{
+    if (q->count < FULL)
+    {
+        node *tmp;
+        tmp = malloc(sizeof(node));
+        tmp->dist = value;
+        tmp->pt = point;
+        tmp->next = NULL;
+        if(!isempty(q))
+        {
+            q->rear->next = tmp;
+            q->rear = tmp;
         }
-        printf("\n"); 
-        printf("\n");
+        else
+        {
+            q->front = q->rear = tmp;
+        }
+        q->count++;
+    }
+    else
+    {
+        printf("List is full\n");
     }
 }
 
+bool dequeue(queue *q)
+{
+    
+    if (q->front == NULL){return false;}
+    node *tmp = q->front;
+    
+    q->front = q->front->next;
+    if(q->front == NULL){ q->rear = NULL;}
+    q->count--;
+    free(tmp);
+    return true;
+}
 
-
-int BaseToCords(int Base) {
-    int offset;
-    // Changing Base numbers to actual map co-ordinates
-    switch (Base) {
-    case 1:
-        offset = 160;
-
-        break;
-    case 2:
-        offset = 162;
-        break;
-    case 3:
-        offset = 164;
-        break;
-    case 4:
-        offset = 116;
-        break;
-    case 5:
-        offset = 103;
-        break;
-    case 6:
-        offset = 90;
-        break;
-    case 7:
-        offset = 8;
-        break;
-    case 8:
-        offset = 6;
-        break;
-    case 9:
-        offset = 4;
-        break;
-    case 10:
-        offset = 53;
-        break;
-    case 11:
-        offset = 66;
-        break;
-    case 12:
-        offset = 79;
-        break;
-
-    default:
-        printf("Please input a base number between 1 and 12");
+void display(node *head)
+{
+    if(head == NULL)
+    {
+        printf("NULL\n");
     }
-    return offset;
+    else
+    {
+        printf("count: %d, x: %d, y:%d\n", head -> dist, head->pt.x, head->pt.y);
+        display(head->next);
+    }
 }
 
-bool CheckCell(int row, int col){
-
-   return (row >= 0) && (row < 13) &&
-           (col >= 0) && (col < 13);
-
+bool TargetReached(Pos Target, Pos pos)
+{
+    if (pos.x == Target.x && pos.y == Target.y)
+    {
+        return true;
+    }else
+    {
+        return false;
+    }
 }
-
-
-void MazeAlgorithm(int Source,int Target){
-int *MazeEdit = *maze; 
-int col, row, trow, tcol, nrow, ncol;
-
-int TargetOffset = BaseToCords(Target);
-int StartOffset = BaseToCords(Source);
-
-int j;
-int i = 1;
-int q;
-*(MazeEdit + TargetOffset) = i++;
-
-col = TargetOffset % 13;
-row = (TargetOffset-col)/13;
-
-int dir[4] = {-1,0,1,0}; 
-int dil[4] = {0,-1,0,1}; 
-
-bool foundBranch;
-
-
-
-sizeof
-while(*(MazeEdit + StartOffset) == 0){
-foundBranch = false;
-for(j = 0; j < 4; j++){
-trow = row + dir[j];
-tcol = col + dil[j];
-if(CheckCell(trow,tcol)){
-    if (maze[trow][tcol] == 0 ){
-        maze[trow][tcol] = i;
-        foundBranch = true;
-        nrow = trow;
-        ncol = tcol;
-        i++;
-        break;
-    } 
-}
-
-}
-
-if (!foundBranch ){
-    printf("BACKTRACKING\n");
-
-    for(j = 0; j < 4; j++){
-        i = maze[row][col] -1;
-        trow = row + dir[j];
-        tcol = col + dil[j];
-        printf("scanner : %d, i: %d\n", maze[trow][tcol], i--);
-        if (maze[trow][tcol] > i && CheckCell(trow,tcol)){
-                 printf("After if: tcol: %d, nC ol: %d\n",trow,tcol);
-                nrow = trow;
-                ncol = tcol;
-                i  = maze[trow][tcol];
-            }
-         }
-            } 
-  
-
-row = nrow;
-col = ncol;
-
-
-}
-}
-
 void CreateMap(void){
 int i,j;
 // Creating Map Full of -1
@@ -194,12 +147,82 @@ for (i = 2; i < 11 ; i++){
     }
 }
 }
+bool CheckCell(int row, int col){
+
+   return (row >= 0) && (row < 13) &&
+           (col >= 0) && (col < 13);
+
+}
+void PrintMaze(){
+     for (int i = 0; i < 13; i++){
+        for (int j = 0; j < 13; j++){
+             printf( "  %d \t",maze[i][j]);
+        }
+        printf("\n"); 
+        printf("\n");
+    }
+}
+
+bool Algorithm()
+{
+    //Creating queue and assigning memory
+    queue *q;
+    q = malloc(sizeof(queue));
+    initialize(q);
+
+    //Initilizing some variables used.
+    int p,qu;
+    int dist = 1;
+    int dix[4] = {-1,0,0,1};
+    int diy[4] = {0,-1,1,0};
 
 
+    Pos source = {12,4};
+    Pos goal = {0,8};
 
 
+    //Creating visited map
+    bool visited[13][13];
+    memset(visited, false, sizeof(visited));
+    visited[goal.x][goal.y] = true;
+    //Marking goal cell with 1.
+    maze[goal.x][goal.y] = 1;
+
+    node *CurrNode;
+
+    enqueue(q,goal,1);
 
 
+//Expand Function
+    while(!isempty(q))
+    {
+        CurrNode = q->front;
+        Pos CurrPos = CurrNode->pt;
+        dist = CurrNode->dist;
+        if(TargetReached(source,CurrPos)){return true;}
+        dequeue(q);
+
+       for(p = 0; p < 4; p++)
+       {    
+            int row = CurrPos.x + dix[p];
+            int col = CurrPos.y + diy[p];
+
+            if(CheckCell(row,col) && maze[row][col] == 0 && !visited[row][col])
+            {
+                visited[row][col] = true;
+                maze[row][col] = dist+1;
+                Pos Neighbour = {row,col};
+                enqueue(q, Neighbour, dist+1);
+            } 
+       }
+    } return false;
+}
 
 
-
+int main()
+{
+    CreateMap();
+    Algorithm();
+    PrintMaze();
+    return 0;
+}
