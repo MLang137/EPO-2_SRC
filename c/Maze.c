@@ -4,6 +4,9 @@
 #include <string.h>
 #define FULL 100
 
+
+
+
 int maze[13][13];
 
 struct Pos
@@ -103,6 +106,113 @@ bool TargetReached(Pos Target, Pos pos)
         return false;
     }
 }
+
+void readInput()
+{
+int minecount,i;
+Pos mine;
+char direction;
+scanf("%d", &minecount);
+int goal,source;
+
+for(i = 0; i < minecount; i++)
+{
+    scanf("%d %d %c",&mine.x,&mine.y,&direction);
+    // Read x and y of intersections and add 2 to place them at the right cords.
+    mine.x = mine.x+2;
+    mine.y = mine.y+2;
+    switch(direction)
+    {
+        case 'n':
+            mine.x--;
+            break;
+        case 'e':
+            mine.y++;
+            break;
+        case 's':
+            mine.x++;
+            break;
+        case 'w':
+            mine.y--;
+            break;
+        default:
+        break;
+    }
+        maze[mine.x][mine.y] = -1;
+}
+}
+
+
+
+void addMine(Pos mine)
+{
+    maze[mine.x][mine.y] = -1;
+    return;
+}
+
+
+
+//bocht duurt 4.6
+//rechtdoor duurt 3.8.
+Pos BasetoCord(int base)
+{   
+    Pos newCord;
+    switch(base)
+    {
+        case 1:
+            newCord.x = 12;
+            newCord.y = 4;
+            break;
+        case 2: 
+            newCord.x = 12;
+            newCord.y = 6;
+            break;
+        case 3:
+            newCord.x = 12;
+            newCord.y = 8;
+            break;
+        case 4:
+            newCord.x = 8;
+            newCord.y = 12;
+            break;
+        case 5:
+            newCord.x = 6;
+            newCord.y = 12;
+            break;
+        case 6:
+            newCord.x = 4;
+            newCord.y = 12;
+            break;
+        case 7:
+            newCord.x = 0;
+            newCord.y = 8;
+            break;
+        case 8:
+            newCord.x = 0;
+            newCord.y = 6;
+            break;
+        case 9:
+            newCord.x = 0;
+            newCord.y = 4;
+            break;
+        case 10:
+            newCord.x = 4;
+            newCord.y = 0;
+            break;
+        case 11:
+            newCord.x = 6;
+            newCord.y = 0;
+            break;
+        case 12:
+            newCord.x = 8;
+            newCord.y = 0;
+            break;
+        default:
+        printf("Please give a basenumber between 1 and 12\n");
+    } 
+            return newCord;
+}
+
 void CreateMap(void){
 int i,j;
 // Creating Map Full of -1
@@ -163,7 +273,7 @@ void PrintMaze(){
     }
 }
 
-bool Algorithm()
+bool Algorithm(Pos source, Pos goal)
 {
     //Creating queue and assigning memory
     queue *q;
@@ -176,9 +286,6 @@ bool Algorithm()
     int dix[4] = {-1,0,0,1};
     int diy[4] = {0,-1,1,0};
 
-
-    Pos source = {12,4};
-    Pos goal = {0,8};
 
 
     //Creating visited map
@@ -219,10 +326,59 @@ bool Algorithm()
 }
 
 
+
+bool RoutePlanner(Pos Source, Pos Goal)
+{
+    int dix[4] = {-1,0,0,1};
+    int diy[4] = {0,-1,1,0};
+    int p;
+
+    int count = maze[Source.x][Source.y];
+    Pos CurrPos = Source;
+
+    Pos Route[] = malloc(sizeof(Pos));
+
+int i = 0;
+while(!TargetReached(Goal,CurrPos)){
+       for(p = 0; p < 4; p++)
+       {     
+            int row = CurrPos.x + dix[p];
+            int col = CurrPos.y + diy[p];
+
+            if(maze[row][col] == count-1){
+                CurrPos.x = row;
+                CurrPos.y = col;
+                Route[i].x = dix[p];
+                Route[i].y = diy[p];
+            }
+       }
+       count--;
+       i++;
+
+}
+int j;
+for(j =0; j < i; j++)
+{
+
+    printf("Step %d, dx: %d, dy: %d\n",j,Route[j].x,Route[j].y);
+
+
+}
+
+}
 int main()
 {
+    Pos Mine1 = {5,2}; 
+    Pos Mine2 = {5,5};
+
+    Pos Source = {4,0}; //Base 10
+    Pos Goal = {8,0}; //Base 12
     CreateMap();
-    Algorithm();
+    addMine(Mine1);
+    addMine(Mine2);
+    Algorithm(Source, Goal);
+    printf("\n");
     PrintMaze();
+    RoutePlanner(Source, Goal);
     return 0;
 }
