@@ -16,8 +16,11 @@ entity controller is
 
 		route_straight	: in	std_logic; -- 1 to go straight
 		route_corner	: in	std_logic; -- 1 to turn left, 0 to turn right
-		mine				: in	std_logic; -- mine detected
-
+		--mine_input				: in	std_logic; -- mine detected
+		maneuver_complete : out std_logic;
+		uart_write			: out std_logic;
+		uart_read			: out std_logic;
+		
 		count_in		: in	std_logic_vector (19 downto 0);
 		count_reset		: out	std_logic;
 
@@ -68,9 +71,13 @@ begin
 					motor_l_reset <= '1';
 					motor_r_direction <= '1';
 					motor_r_reset <= '1';
-					if mine = '1' then
-						new_state <= turnaround;
-					elsif sensor_l = '1' and sensor_m = '0' and sensor_r = '0' then
+					maneuver_complete <= '0';
+					uart_read <= '0';
+					uart_write <= '1';
+					wait_for_line <= '0';
+					--if mine_input = '1' then
+--						new_state <= turnaround; -- ELS hieronder
+					if sensor_l = '1' and sensor_m = '0' and sensor_r = '0' then
 						new_state <= fs;
 					elsif sensor_l = '1' and sensor_m = '1' and sensor_r = '0' then
 						new_state <= fr;
@@ -80,10 +87,18 @@ begin
 						new_state <= rf;
 					elsif sensor_l = '0' and sensor_m = '0' and sensor_r = '0' then
 						-- Update the crossing signal
-						if crossing = '0' then
+						if crossing = '0' then -- reached a midpoint on the line
 							crossing <= '1';
+							-- Send maneuver complete signal
+							maneuver_complete <= '1';
+							uart_write <= '1';
+							uart_read <= '0';
 							wait_for_line <= '0';
 						else
+							-- Wait to recieve signal
+							maneuver_complete <= '0';
+							uart_write <= '0';
+							uart_read <= '1';
 							-- Decide the route
 							if route_straight = '1' then
 								new_state <= ff;
