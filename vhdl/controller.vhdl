@@ -16,7 +16,7 @@ entity controller is
 
 		route_straight	: in	std_logic; -- 1 to go straight
 		route_corner	: in	std_logic; -- 1 to turn left, 0 to turn right
-		--mine_input				: in	std_logic; -- mine detected
+		mine_input				: in	std_logic; -- mine detected
 		maneuver_complete : out std_logic;
 		uart_write			: out std_logic;
 		uart_read			: out std_logic;
@@ -75,9 +75,9 @@ begin
 					uart_read <= '0';
 					uart_write <= '1';
 					wait_for_line <= '0';
-					--if mine_input = '1' then
---						new_state <= turnaround; -- ELS hieronder
-					if sensor_l = '1' and sensor_m = '0' and sensor_r = '0' then
+					if mine_input = '1' then
+						new_state <= turnaround;
+					elsif sensor_l = '1' and sensor_m = '0' and sensor_r = '0' then
 						new_state <= fs;
 					elsif sensor_l = '1' and sensor_m = '1' and sensor_r = '0' then
 						new_state <= fr;

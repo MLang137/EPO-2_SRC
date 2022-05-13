@@ -13,7 +13,7 @@ entity robot is
 
 		--route_straight		: in	std_logic; -- 1 to go straight
 		--route_corner		: in	std_logic; -- 1 to turn left, 0 to turn right
-		--mine					: in	std_logic;
+		mine_input					: in	std_logic;
 		
 		rx						: in std_logic;
 		tx						: out std_logic;
@@ -59,7 +59,7 @@ architecture structural of robot is
 
 				route_straight	: in	std_logic;
 				route_corner	: in	std_logic;
-				--mine_input				: in	std_logic;
+				mine_input				: in	std_logic;
 				
 				maneuver_complete: out	std_logic;
 				
@@ -161,7 +161,7 @@ begin
 		route_straight	=> uart_data_out_cont(3),
 		route_corner	=> uart_data_out_cont(2),
 		
-		--mine_input				=> ram_data_in_cont(2),
+		mine_input				=> mine_input,
 		maneuver_complete => cont_data_in_uart(6),
 		--mine_output	=> cont_data_in_uart(7),
 
