@@ -163,6 +163,63 @@ void PrintMaze(){
     }
 }
 
+bool RoutePlanner2(Pos Source, Pos Goal)
+{
+  //Creating queue and assigning memory
+    queue *t;
+    t = malloc(sizeof(queue));
+    initialize(t);
+
+    Pos **Routs;
+    Route = (Pos**)calloc(count, sizeof(Pos));
+    //Initilizing some variables used.
+    int p,qu;
+    int dist = 1;
+    int dix[4] = {-1,0,0,1};
+    int diy[4] = {0,-1,1,0};
+
+
+
+    //Creating visited map
+    bool visited[13][13];
+    memset(visited, false, sizeof(visited));
+    visitedback[source.x][source.y] = true;
+
+
+    int count = maze[Source.x][Source.y];
+    Pos CurrPos = Source;
+    node *CurrNode;
+
+    enqueue(t,Source,1);
+
+
+//Expand Function
+int i = 0;
+    while(!TargetReached(Goal,CurrPos))
+    {
+        CurrNode = q->front;
+        Pos CurrPos = CurrNode->pt;
+        dequeue(q);
+
+       for(p = 0; p < 4; p++)
+       {    
+            int row = CurrPos.x + dix[p];
+            int col = CurrPos.y + diy[p];
+
+            if(maze[row][col] == count-1)
+            {
+                
+                Routes[]
+                visited[row][col] = true;
+                Pos Neighbour = {row,col};
+                enqueue(q, Neighbour, dist+1);
+            } 
+       }
+         count--;
+         i++;
+    } return false;
+}
+
 bool Algorithm()
 {
     //Creating queue and assigning memory

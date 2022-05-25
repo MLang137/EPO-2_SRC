@@ -2,8 +2,91 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
-#define FULL 100
+#include <Windows.h>
 
+#define FULL 100
+#define COMPORT "COM4"
+#define BAUDRATE CBR_9600
+
+/*--------------------------------------------------------------
+// Function: initSio
+// Description: intializes the parameters as Baudrate, Bytesize,
+//           Stopbits, Parity and Timeoutparameters of
+//           the COM port
+//--------------------------------------------------------------
+*/
+void initSio(HANDLE hSerial){
+
+    COMMTIMEOUTS timeouts ={0};
+    DCB dcbSerialParams = {0};
+
+    dcbSerialParams.DCBlength = sizeof(dcbSerialParams);
+
+    if (!GetCommState(hSerial, &dcbSerialParams)) {
+        /*error getting state*/
+        printf("error getting state \n");
+    }
+
+    dcbSerialParams.BaudRate = BAUDRATE;
+    dcbSerialParams.ByteSize = 8;
+    dcbSerialParams.StopBits = ONESTOPBIT;
+    dcbSerialParams.Parity   = NOPARITY;
+
+    if(!SetCommState(hSerial, &dcbSerialParams)){
+        /*error setting serial port state*/
+        printf("error setting state \n");
+    }
+
+    timeouts.ReadIntervalTimeout = 50;
+    timeouts.ReadTotalTimeoutConstant = 50;
+    timeouts.ReadTotalTimeoutMultiplier = 10;
+
+    timeouts.WriteTotalTimeoutConstant = 50;
+    timeouts.WriteTotalTimeoutMultiplier = 10;
+
+    if(!SetCommTimeouts(hSerial, &timeouts)){
+    /*error occureed. Inform user*/
+        printf("error setting timeout state \n");
+    }
+}
+
+/*--------------------------------------------------------------
+// Function: readByte
+// Description: reads a single byte from the COM port into
+//              buffer buffRead
+//--------------------------------------------------------------
+*/
+bool readByte(HANDLE hSerial, char *buffRead) {
+
+    DWORD dwBytesRead = 0;
+
+    if (!ReadFile(hSerial, buffRead, 1, &dwBytesRead, NULL))
+    {
+        printf("error reading byte from input buffer \n");
+        return false;
+    }
+    printf("Byte read from read buffer is: %c \n", buffRead[0]);
+    return true;
+}
+
+/*--------------------------------------------------------------
+// Function: writeByte
+// Description: writes a single byte stored in buffRead to
+//              the COM port
+//--------------------------------------------------------------
+*/
+int writeByte(HANDLE hSerial, char *buffWrite){
+
+    DWORD dwBytesWritten = 0;
+
+    if (!WriteFile(hSerial, buffWrite, 1, &dwBytesWritten, NULL))
+    {
+        printf("error writing byte to output buffer \n");
+    }
+    printf("Byte written to write buffer is: %c \n", buffWrite[0]);
+
+    return(0);
+}
 
 
 
@@ -142,18 +225,12 @@ for(i = 0; i < minecount; i++)
 }
 }
 
-
-
-void addMine(Pos mine)
+bool addMine(Pos mine)
 {
     maze[mine.x][mine.y] = -1;
-    return;
+    return true;
 }
 
-
-
-//bocht duurt 4.6
-//rechtdoor duurt 3.8.
 Pos BasetoCord(int base)
 {   
     Pos newCord;
@@ -325,7 +402,12 @@ bool Algorithm(Pos source, Pos goal)
     } return false;
 }
 
+bool scanMap(Pos source){
+    // 120 time to scan the entire map for mines, after 120 sec the bot
+    // has to be returned and a new mine will be placed in the map.
+    // this mine is the 'treasure', the goal is to find this treasure.
 
+    // t links, p rechts, x vooruit.
 
 
 
@@ -337,11 +419,28 @@ char * RoutePlanner(Pos Source, Pos Goal, int SourceNum)
     int dix[4] = {-1,0,0,1};
     int diy[4] = {0,-1,1,0};
     int p;
+    int pdx = 0;
+    int pdy = 0;
+    int direction;
 
+
+    
+        if(SourceNum == 1||SourceNum == 2||SourceNum == 3){
+            direction = 1;
+        } else if (SourceNum == 4||SourceNum == 5 ||SourceNum == 6){
+            direction = 4;
+        } else if( SourceNum == 7||SourceNum == 8|| SourceNum ==9){
+            direction = 3;
+        } else if( SourceNum == 10||SourceNum == 11||SourceNum == 12){
+            direction = 2;
+        }
+            
+    
     int count = maze[Source.x][Source.y];
     Pos CurrPos = Source;
 
-    Pos Route[] = malloc(sizeof(Pos));
+    Pos *Route;
+    Route = (Pos*)calloc(count, sizeof(Pos));
 
 int i = 0;
 while(!TargetReached(Goal,CurrPos)){
@@ -350,7 +449,19 @@ while(!TargetReached(Goal,CurrPos)){
             int row = CurrPos.x + dix[p];
             int col = CurrPos.y + diy[p];
 
-            if(maze[row][col] == count-1){
+            int rowlast = CurrPos.x + pdx;
+            int collast = CurrPos.y + pdy;
+
+        if(maze[rowlast][collast] == count-1  && i != 0){
+                CurrPos.x += pdx;
+                CurrPos.y += pdy;
+                Route[i].x = pdx;
+                Route[i].y = pdy;
+        }
+        else if (maze[row][col] == count-1)
+            {
+                pdx = dix[p];
+                pdy = diy[p];
                 CurrPos.x = row;
                 CurrPos.y = col;
                 Route[i].x = dix[p];
@@ -362,28 +473,139 @@ while(!TargetReached(Goal,CurrPos)){
 
 }
 int j;
-for(j =0; j < i; j++)
+int BufferLength = maze[Source.x][Source.y];
+char *Buffer;
+Buffer = (char*)calloc(maze[Source.x][Source.y], sizeof(char));
+static char *RouteLRF;
+RouteLRF = (char*)calloc(maze[Source.x][Source.y], sizeof(char));
+
+for(j =0; j < maze[Source.x][Source.y]; j++)
 {
 
-    printf("Step %d, dx: %d, dy: %d\n",j,Route[j].x,Route[j].y);
+    
+    if(Route[j].x == 1){Buffer[j] = 'S';}
+     if(Route[j].x == -1){Buffer[j] = 'N';}
+      if(Route[j].y == 1){Buffer[j] = 'E';}
+       if(Route[j].y == -1){Buffer[j] = 'W';}
+}
+free(Route);
+RouteLRF[0] = 'f';
+// t links, p rechts, x vooruit.
+for(j = 1; j < maze[Source.x][Source.y]; j++){
+        if (Buffer[j-1] == Buffer[j]){
+            RouteLRF[j] = 'x'; 
+        }
+        else if(Buffer[j] == 'E' && direction == 1){
+            RouteLRF[j] = 'p';
+            direction = 2;
+        }
+        else if(Buffer[j] == 'W' && direction == 1){
+            RouteLRF[j] = 't';
+            direction = 4;
+        }
+        else if(Buffer[j] == 'S' && direction == 2){
+            RouteLRF[j] = 'p';
+            direction = 3;
+        }
+        else if(Buffer[j] == 'N' && direction == 2){
+            RouteLRF[j] = 't';
+            direction = 1;
+        }
+        else if(Buffer[j] == 'E' && direction == 3){
+            RouteLRF[j] = 't';
+            direction = 2;
+        }
+        else if(Buffer[j] == 'W' && direction == 3){
+            RouteLRF[j] = 'p';
+            direction = 4;
+        }
+        else if(Buffer[j] == 'N' && direction == 4){
+            RouteLRF[j] = 'p';
+            direction = 1;
+        }
+        else if(Buffer[j] == 'S' && direction == 4){
+            RouteLRF[j] = 't';
+            direction = 3;
+        }
+}
+free(Buffer);
 
+return RouteLRF;
+
+}
+//o is ontvangen
+
+void sendBytes(Pos Source){
+    int direction;
+    int i;
+    HANDLE hSerial;
+
+
+    char byteBuffer[BUFSIZ+1];
+
+    /*----------------------------------------------------------
+    // Open COMPORT for reading and writing
+    //----------------------------------------------------------*/
+    hSerial = CreateFile(COMPORT,
+        GENERIC_READ | GENERIC_WRITE,
+        0,
+        0,
+        OPEN_EXISTING,
+        FILE_ATTRIBUTE_NORMAL,
+        0
+    );
+
+    if(hSerial == INVALID_HANDLE_VALUE){
+        if(GetLastError()== ERROR_FILE_NOT_FOUND){
+            /*serial port does not exist. Inform user.*/
+            printf(" serial port does not exist \n");
+        }
+        /*some other error occurred. Inform user.*/
+        printf(" some other error occured. Inform user.\n");
+    }
+
+    /*----------------------------------------------------------
+    // Initialize the parameters of the COM port
+    //----------------------------------------------------------*/
+
+    initSio(hSerial);
+
+    char *buffer;
+    buffer = RoutePlanner(BasetoCord(10),BasetoCord(1),10);
+
+    for(i = 0; i<maze[Source.x][Source.y];i++)
+    {
+        writeByte(hSerial, (buffer+i));
+        printf("Press Any Key to Continue\n");
+        getchar();
+    }
+ 
 
 }
 
-}
+
 int main()
 {
-    Pos Mine1 = {5,2}; 
-    Pos Mine2 = {5,5};
-
-    Pos Source = {4,0}; //Base 10
-    Pos Goal = {8,0}; //Base 12
+    int minecount;
+    int i;
+    int SourceBase = 9;
+    Pos Source = BasetoCord(SourceBase); 
+    Pos Goal = BasetoCord(1); 
     CreateMap();
-    addMine(Mine1);
-    addMine(Mine2);
+    Pos Mines[8] = {{5,2},{7,7},{8,3},{6,6},{5,4},{8,6},{11,2},{8,5}};
+    for(i = 0; i < 8; i++){
+        addMine(Mines[i]);
+    }
     Algorithm(Source, Goal);
     printf("\n");
     PrintMaze();
-    RoutePlanner(Source, Goal);
+    char *test;
+    test = RoutePlanner(Source, Goal,SourceBase);
+ 
+    sendBytes(Source);
+
+    for (i = 0; i < maze[Source.x][Source.y]; i++){
+        printf("%c ", test[i]);
+    }
     return 0;
 }
