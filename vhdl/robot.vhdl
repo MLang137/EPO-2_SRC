@@ -11,9 +11,12 @@ entity robot is
 
 		sensor				: in    std_logic_vector(2 downto 0);
 
-		route_straight		: in	std_logic; -- 1 to go straight
-		route_corner		: in	std_logic; -- 1 to turn left, 0 to turn right
-		mine					: in	std_logic;
+		--route_straight		: in	std_logic; -- 1 to go straight
+		--route_corner		: in	std_logic; -- 1 to turn left, 0 to turn right
+		mine_input					: in	std_logic;
+		
+		rx						: in std_logic;
+		tx						: out std_logic;
 
 		motor_l_pwm     	: out   std_logic;
 		motor_r_pwm     	: out   std_logic
@@ -56,7 +59,12 @@ architecture structural of robot is
 
 				route_straight	: in	std_logic;
 				route_corner	: in	std_logic;
-				mine				: in	std_logic;
+				mine_input				: in	std_logic;
+				
+				maneuver_complete: out	std_logic;
+				
+				uart_read		: out std_logic;
+				uart_write		: out std_logic;
     
             count_in		: in	std_logic_vector (19 downto 0);
             count_reset		: out	std_logic;
@@ -79,6 +87,34 @@ architecture structural of robot is
 			pwm				: out	std_logic
 		);
 	end component motorcontrol;
+	
+	component uart is
+	    port (
+        clk             : in  std_logic;
+        reset           : in  std_logic;
+
+        rx              : in  std_logic;
+        tx              : out std_logic;
+
+        data_in         : in  std_logic_vector (7 downto 0);
+        buffer_empty    : out std_logic;
+        write           : in  std_logic;
+
+        data_out        : out std_logic_vector (7 downto 0);
+        data_ready      : out std_logic;
+        read            : in  std_logic
+    );
+	end component uart;
+	
+	component eight_bit_ram is
+		port (
+			ram_data_in			: in std_logic_vector(7 downto 0); -- Data to write into RAM
+			ram_write				: in std_logic; -- Write enable 
+			clk			: in std_logic; -- clock input for RAM
+			reset					: in std_logic;
+			ram_data_out		: out std_logic_vector(7 downto 0) -- Data output of RAM
+	);
+	end component eight_bit_ram;
 
 	-- Global signal
 	signal count: std_logic_vector(19 downto 0);
@@ -88,8 +124,15 @@ architecture structural of robot is
 	signal cont_direction_mcl, cont_reset_mcl, cont_direction_mcr, cont_reset_mcr: std_logic;
 	-- Controller to timebase
 	signal cont_reset_tib: std_logic;
+	-- Uart unused signals
+	signal uart_rx, uart_tx, uart_buffer_empty, uart_data_ready, uart_write, uart_read: std_logic;
+	-- Uart to controller
+	signal uart_data_out_cont: std_logic_vector(7 downto 0);
+	-- Controller to UART
+	signal cont_data_in_uart: std_logic_vector(7 downto 0);
 
 begin
+	
 	
 	tib: timebase port map	(
 		clk				=> clk,
@@ -115,9 +158,15 @@ begin
 		sensor_m		=> buf_sensor_m_cont,
 		sensor_r		=> buf_sensor_r_cont,
 
-		route_straight	=> route_straight,
-		route_corner	=> route_corner,
-		mine				=> mine,
+		route_straight	=> uart_data_out_cont(3),
+		route_corner	=> uart_data_out_cont(2),
+		
+		mine_input				=> mine_input,
+		maneuver_complete => cont_data_in_uart(6),
+		--mine_output	=> cont_data_in_uart(7),
+
+		uart_write			=> uart_write,
+		uart_read			=> uart_read,
 
 		count_in		=> count,
 		count_reset		=> cont_reset_tib,
@@ -145,4 +194,27 @@ begin
 		pwm				=> motor_r_pwm
 	);
 	
+	urt: uart port map (
+        clk				=> clk,
+        reset           => reset,
+
+        rx              => rx,
+        tx              => tx,
+
+        data_in         => cont_data_in_uart,
+        buffer_empty    => uart_buffer_empty,
+        write           => uart_write,
+
+        data_ready      => uart_data_ready,
+        read            => uart_read,
+		  data_out        => uart_data_out_cont
+	);
+	
+	cont_data_in_uart(5) <= '1';
+	cont_data_in_uart(4) <= '0';
+	cont_data_in_uart(3) <= '1';
+	cont_data_in_uart(2) <= '1';
+	cont_data_in_uart(1) <= '1';
+	cont_data_in_uart(0) <= '1';
+
 end architecture structural;
