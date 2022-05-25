@@ -327,7 +327,12 @@ bool Algorithm(Pos source, Pos goal)
 
 
 
-bool RoutePlanner(Pos Source, Pos Goal)
+
+
+
+
+}
+char * RoutePlanner(Pos Source, Pos Goal, int SourceNum)
 {
     int dix[4] = {-1,0,0,1};
     int diy[4] = {0,-1,1,0};
