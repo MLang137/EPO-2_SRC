@@ -5,7 +5,7 @@
 #include <Windows.h>
 
 #define FULL 100
-#define COMPORT "COM4"
+#define COMPORT "COM9"
 #define BAUDRATE CBR_9600
 
 /*--------------------------------------------------------------
@@ -489,7 +489,7 @@ for(j =0; j < maze[Source.x][Source.y]; j++)
        if(Route[j].y == -1){Buffer[j] = 'W';}
 }
 free(Route);
-RouteLRF[0] = 'f';
+RouteLRF[0] = 'x';
 // t links, p rechts, x vooruit.
 for(j = 1; j < maze[Source.x][Source.y]; j++){
         if (Buffer[j-1] == Buffer[j]){
@@ -529,7 +529,6 @@ for(j = 1; j < maze[Source.x][Source.y]; j++){
         }
 }
 free(Buffer);
-
 return RouteLRF;
 
 }
@@ -573,6 +572,13 @@ void sendBytes(Pos Source){
     char *buffer;
     buffer = RoutePlanner(BasetoCord(10),BasetoCord(1),10);
 
+    
+    
+    for(i = 0; i < maze[Source.x][Source.y]; i++){
+        printf("%c ",buffer[i]);
+    }
+    printf("Press Any Key to Continue\n");
+    getchar();
     for(i = 0; i<maze[Source.x][Source.y];i++)
     {
         writeByte(hSerial, (buffer+i));
@@ -588,24 +594,20 @@ int main()
 {
     int minecount;
     int i;
-    int SourceBase = 9;
+    int SourceBase = 10;
+    ;
     Pos Source = BasetoCord(SourceBase); 
     Pos Goal = BasetoCord(1); 
     CreateMap();
-    Pos Mines[8] = {{5,2},{7,7},{8,3},{6,6},{5,4},{8,6},{11,2},{8,5}};
-    for(i = 0; i < 8; i++){
+    Pos Mines[5] = {{5,4},{6,3},{7,2},{4,6},{5,5}};
+    for(i = 0; i < 5; i++){
         addMine(Mines[i]);
     }
+    
     Algorithm(Source, Goal);
     printf("\n");
     PrintMaze();
-    char *test;
-    test = RoutePlanner(Source, Goal,SourceBase);
- 
     sendBytes(Source);
-
-    for (i = 0; i < maze[Source.x][Source.y]; i++){
-        printf("%c ", test[i]);
-    }
+ 
     return 0;
 }
