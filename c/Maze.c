@@ -579,13 +579,10 @@ void sendBytes(Pos Source){
     }
     printf("Press Any Key to Continue\n");
     getchar();
-    for(i = 0; i<maze[Source.x][Source.y];i++)
-    {
         writeByte(hSerial, (buffer+i));
         printf("Press Any Key to Continue\n");
         getchar();
-    }
- 
+    	readByte(hSerial, )
 
 }
 
