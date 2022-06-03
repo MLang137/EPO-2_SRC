@@ -3,16 +3,15 @@
 #include <Windows.h>
 #include <string.h>
 
-#define COMPORT "COM4"
+#define COMPORT "COM9"
 #define BAUDRATE CBR_9600
 
-/*--------------------------------------------------------------
+//--------------------------------------------------------------
 // Function: initSio
-// Description: intializes the parameters as Baudrate, Bytesize,
+// Description: intializes the parameters as Baudrate, Bytesize, 
 //           Stopbits, Parity and Timeoutparameters of
 //           the COM port
 //--------------------------------------------------------------
-*/
 void initSio(HANDLE hSerial){
 
     COMMTIMEOUTS timeouts ={0};
@@ -21,7 +20,7 @@ void initSio(HANDLE hSerial){
     dcbSerialParams.DCBlength = sizeof(dcbSerialParams);
 
     if (!GetCommState(hSerial, &dcbSerialParams)) {
-        /*error getting state*/
+        //error getting state
         printf("error getting state \n");
     }
 
@@ -31,7 +30,7 @@ void initSio(HANDLE hSerial){
     dcbSerialParams.Parity   = NOPARITY;
 
     if(!SetCommState(hSerial, &dcbSerialParams)){
-        /*error setting serial port state*/
+        //error setting serial port state
         printf("error setting state \n");
     }
 
@@ -43,17 +42,16 @@ void initSio(HANDLE hSerial){
     timeouts.WriteTotalTimeoutMultiplier = 10;
 
     if(!SetCommTimeouts(hSerial, &timeouts)){
-    /*error occureed. Inform user*/
+    //error occureed. Inform user
         printf("error setting timeout state \n");
     }
 }
 
-/*--------------------------------------------------------------
+//--------------------------------------------------------------
 // Function: readByte
 // Description: reads a single byte from the COM port into
 //              buffer buffRead
 //--------------------------------------------------------------
-*/
 int readByte(HANDLE hSerial, char *buffRead) {
 
     DWORD dwBytesRead = 0;
@@ -62,16 +60,15 @@ int readByte(HANDLE hSerial, char *buffRead) {
     {
         printf("error reading byte from input buffer \n");
     }
-    printf("Byte read from read buffer is: %c \n", buffRead[0]);
+    printf("Byte read from read buffer is: %c \n Bytes Read: %d \n", buffRead[dwBytesRead],dwBytesRead);
     return(0);
 }
 
-/*--------------------------------------------------------------
+//--------------------------------------------------------------
 // Function: writeByte
 // Description: writes a single byte stored in buffRead to
-//              the COM port
+//              the COM port 
 //--------------------------------------------------------------
-*/
 int writeByte(HANDLE hSerial, char *buffWrite){
 
     DWORD dwBytesWritten = 0;
@@ -92,9 +89,9 @@ int main()
 
     char byteBuffer[BUFSIZ+1];
 
-    /*----------------------------------------------------------
+    //----------------------------------------------------------
     // Open COMPORT for reading and writing
-    //----------------------------------------------------------*/
+    //----------------------------------------------------------
     hSerial = CreateFile(COMPORT,
         GENERIC_READ | GENERIC_WRITE,
         0,
@@ -106,23 +103,23 @@ int main()
 
     if(hSerial == INVALID_HANDLE_VALUE){
         if(GetLastError()== ERROR_FILE_NOT_FOUND){
-            /*serial port does not exist. Inform user.*/
+            //serial port does not exist. Inform user.
             printf(" serial port does not exist \n");
         }
-        /*some other error occurred. Inform user.*/
+        //some other error occurred. Inform user.
         printf(" some other error occured. Inform user.\n");
     }
 
-    /*----------------------------------------------------------
+    //----------------------------------------------------------
     // Initialize the parameters of the COM port
-    //----------------------------------------------------------*/
+    //----------------------------------------------------------
 
     initSio(hSerial);
 
     while ( 1 ) {
         gets(byteBuffer);
 
-        if (byteBuffer[0] == 'q') /* end the loop by typing 'q'*/
+        if (byteBuffer[0] == 'q') // end the loop by typing 'q'
             break;
 
         writeByte(hSerial, byteBuffer);
