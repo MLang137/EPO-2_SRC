@@ -34,10 +34,10 @@ begin
 	begin
 		if (reset = '1') then 
 			mine_detected <= '0';
-		elsif (to_integer(unsigned(count)) > 7700) then 
+		elsif (to_integer(unsigned(count)) > 2000) then
 			mine_detected <= '1';
-		elsif (to_integer(unsigned(count)) < 7700) then
-			mine_detected <= '0';
+		--elsif (to_integer(unsigned(count)) <= 2000) then
+--			mine_detected <= '0';
 		end if;
 	end process;
 end architecture behavioural;

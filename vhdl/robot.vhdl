@@ -11,9 +11,13 @@ entity robot is
 
 		sensor				: in    std_logic_vector(2 downto 0);
 
-		--route_straight		: in	std_logic; -- 1 to go straight
+		--route_straight	: in	std_logic; -- 1 to go straight
 		--route_corner		: in	std_logic; -- 1 to turn left, 0 to turn right
-		mine_input					: in	std_logic;
+		--mine_analog			: in	std_logic;
+		mine_input_tmp		: in	std_logic; -- remove when mine analog works (sensor plugged in)!
+		--testsend				: in  std_logic;
+		led					: out	std_logic_vector(7 downto 0);
+		--send					: in	std_logic;
 		
 		rx						: in std_logic;
 		tx						: out std_logic;
@@ -59,8 +63,8 @@ architecture structural of robot is
 
 				route_straight	: in	std_logic;
 				route_corner	: in	std_logic;
-				mine_input				: in	std_logic;
-				
+				mine_detected	: in	std_logic;
+				stop				: in	std_logic;
 				maneuver_complete: out	std_logic;
 				
 				uart_read		: out std_logic;
@@ -106,15 +110,14 @@ architecture structural of robot is
     );
 	end component uart;
 	
-	component eight_bit_ram is
-		port (
-			ram_data_in			: in std_logic_vector(7 downto 0); -- Data to write into RAM
-			ram_write				: in std_logic; -- Write enable 
-			clk			: in std_logic; -- clock input for RAM
-			reset					: in std_logic;
-			ram_data_out		: out std_logic_vector(7 downto 0) -- Data output of RAM
+	component input_converter is
+	port (
+			clk   			: in std_logic;
+			reset 			: in std_logic;
+			mine_analog 	: in std_logic;
+			mine_detected 	: out std_logic
 	);
-	end component eight_bit_ram;
+	end component input_converter;
 
 	-- Global signal
 	signal count: std_logic_vector(19 downto 0);
@@ -130,6 +133,13 @@ architecture structural of robot is
 	signal uart_data_out_cont: std_logic_vector(7 downto 0);
 	-- Controller to UART
 	signal cont_data_in_uart: std_logic_vector(7 downto 0);
+	-- Analog input to input converter
+	signal mine_analog_inpconv: std_logic;
+	-- Mine detected input converter to controller
+	signal inpconv_mine_detected_cont: std_logic;
+	
+	signal tmp: std_logic;
+	
 
 begin
 	
@@ -151,25 +161,25 @@ begin
     );
 		
 	cont: controller port map (
-		clk             => clk,
-		reset			=> reset,
+		clk         		=> clk,
+		reset					=> reset,
 
-		sensor_l		=> buf_sensor_l_cont,
-		sensor_m		=> buf_sensor_m_cont,
-		sensor_r		=> buf_sensor_r_cont,
+		sensor_l				=> buf_sensor_l_cont,
+		sensor_m				=> buf_sensor_m_cont,
+		sensor_r				=> buf_sensor_r_cont,
 
-		route_straight	=> uart_data_out_cont(3),
-		route_corner	=> uart_data_out_cont(2),
-		
-		mine_input				=> mine_input,
+		route_straight		=> uart_data_out_cont(3),
+		route_corner		=> uart_data_out_cont(2),
+		mine_detected		=> mine_input_tmp,--inpconv_mine_detected_cont,
+		stop					=> uart_data_out_cont(1),
 		maneuver_complete => cont_data_in_uart(6),
 		--mine_output	=> cont_data_in_uart(7),
 
 		uart_write			=> uart_write,
 		uart_read			=> uart_read,
 
-		count_in		=> count,
-		count_reset		=> cont_reset_tib,
+		count_in				=> count,
+		count_reset			=> cont_reset_tib,
 
 		motor_l_direction	=> cont_direction_mcl,
 		motor_l_reset		=> cont_reset_mcl,
@@ -180,22 +190,22 @@ begin
 
 	mcl: motorcontrol port map (
 		clk				=> clk,
-		reset			=> cont_reset_mcl,
+		reset				=> cont_reset_mcl,
 		direction		=> cont_direction_mcl,
-		count_in		=> count,
+		count_in			=> count,
 		pwm				=> motor_l_pwm
 	);
 
 	mcr: motorcontrol port map (
 		clk				=> clk,
-		reset			=> cont_reset_mcr,
+		reset				=> cont_reset_mcr,
 		direction		=> cont_direction_mcr,
-		count_in		=> count,
+		count_in			=> count,
 		pwm				=> motor_r_pwm
 	);
-	
+
 	urt: uart port map (
-        clk				=> clk,
+        clk					=> clk,
         reset           => reset,
 
         rx              => rx,
@@ -209,12 +219,22 @@ begin
         read            => uart_read,
 		  data_out        => uart_data_out_cont
 	);
-	
+
+	min: input_converter port map (
+			clk				=> clk,
+			reset				=> reset,
+			mine_analog		=> mine_analog_inpconv,
+			mine_detected	=> inpconv_mine_detected_cont
+	);
+
+	-- Standard data bits (to send readable characters)
 	cont_data_in_uart(5) <= '1';
 	cont_data_in_uart(4) <= '0';
 	cont_data_in_uart(3) <= '1';
 	cont_data_in_uart(2) <= '1';
 	cont_data_in_uart(1) <= '1';
 	cont_data_in_uart(0) <= '1';
+	-- Leds show what bit is being received by the robot.
+	led <= uart_data_out_cont; --cont_data_in_uart;
 
 end architecture structural;

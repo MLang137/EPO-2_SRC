@@ -40,6 +40,7 @@ begin
 
 		constant one_ms: unsigned := to_unsigned(50000, 20);
 		constant two_ms: unsigned := to_unsigned(100000, 20);
+		constant three_ms: unsigned := to_unsigned(150000, 20);
 
 	begin
 		if rising_edge(clk) then
@@ -54,8 +55,8 @@ begin
 					-- wait 1 ms
 					if direction = '0' and unsigned(count_in) > one_ms then
 						pwm <= '0';
-					-- wait 2 ms
-					elsif direction = '1' and unsigned(count_in) > two_ms then
+					-- wait 3 ms
+					elsif direction = '1' and unsigned(count_in) > three_ms then
 						pwm <= '0';
 					end if;
 			end case;
