@@ -7,22 +7,25 @@ use IEEE.numeric_std.all;
 
 
 entity controller is
-	port (	clk			: in	std_logic;
-		reset			: in	std_logic;
+	port(
+		clk					: in	std_logic;
+		reset					: in	std_logic;
 
-		sensor_l		: in	std_logic;
-		sensor_m		: in	std_logic;
-		sensor_r		: in	std_logic;
+		sensor_l				: in	std_logic;
+		sensor_m				: in	std_logic;
+		sensor_r				: in	std_logic;
 
-		route_straight	: in	std_logic; -- 1 to go straight
-		route_corner	: in	std_logic; -- 1 to turn left, 0 to turn right
-		mine_input				: in	std_logic; -- mine detected
-		maneuver_complete : out std_logic;
+		route_straight		: in	std_logic; -- 1 to go straight
+		route_corner		: in	std_logic; -- 1 to turn left, 0 to turn right
+		mine_detected		: in	std_logic; -- mine detected digital signal
+		stop					: in	std_logic; -- completely stop the robot permanently
+		maneuver_complete : out std_logic; -- to get next instruction from pc
+
 		uart_write			: out std_logic;
 		uart_read			: out std_logic;
 		
-		count_in		: in	std_logic_vector (19 downto 0);
-		count_reset		: out	std_logic;
+		count_in				: in	std_logic_vector (19 downto 0);
+		count_reset			: out	std_logic;
 
 		motor_l_reset		: out	std_logic;
 		motor_l_direction	: out	std_logic;
@@ -34,10 +37,11 @@ end entity controller;
 
 architecture sys_operator of controller is
 	
-	type control_state is (rst, ff, fs, fr, sf, rf, turnaround);
+	type control_state is (rst, ff, fs, fr, sf, rf, turnaround, ss);
 	-- ff means forward forward, sf means stop foward etc.
 	signal state, new_state: control_state;
 	constant twenty_ms: unsigned := to_unsigned(1000000, 20);
+	constant one_ms: unsigned := to_unsigned(50000, 20);
 
 	-- constant route_straight: std_logic := '1'; -- always straight
 	-- constant route_corner: std_logic := '1';
@@ -71,11 +75,8 @@ begin
 					motor_l_reset <= '1';
 					motor_r_direction <= '1';
 					motor_r_reset <= '1';
-					maneuver_complete <= '0';
-					uart_read <= '0';
-					uart_write <= '1';
 					wait_for_line <= '0';
-					if mine_input = '1' then
+					if mine_detected = '1' then
 						new_state <= turnaround;
 					elsif sensor_l = '1' and sensor_m = '0' and sensor_r = '0' then
 						new_state <= fs;
@@ -87,17 +88,25 @@ begin
 						new_state <= rf;
 					elsif sensor_l = '0' and sensor_m = '0' and sensor_r = '0' then
 						-- Update the crossing signal
-						if crossing = '0' then -- reached a midpoint on the line
+						-- Reached a midpoint on the line
+						if crossing = '0' then
 							crossing <= '1';
-							-- Send maneuver complete signal
+							-- Send maneuver complete signal during one millisecond
 							maneuver_complete <= '1';
 							uart_write <= '1';
 							uart_read <= '0';
 							wait_for_line <= '0';
-						else
+							--while unsigned(count_in) <= twenty_ms loop
+								--uart_write <= '1';
+								--uart_read <= '0';
+							--end loop;
+							--maneuver_complete <= '0';
+							--uart_write <= '0';
+							--uart_read <= '1';
+ 						else
 							-- Wait to recieve signal
 							maneuver_complete <= '0';
-							uart_write <= '0';
+							uart_write <= '1';
 							uart_read <= '1';
 							-- Decide the route
 							if route_straight = '1' then
@@ -118,7 +127,16 @@ begin
 								end if;
 							end if;
 						end if;
-					else
+					elsif sensor_l = '1' and sensor_m = '1' and sensor_r = '1' then -- at station
+						if stop = '1' then
+							new_state <= ss;
+						else
+							new_state <= turnaround;
+						end if;
+					else -- go straight
+						maneuver_complete <= '0';
+						uart_write <= '1';
+						uart_read <= '1';
 						new_state <= ff;
 					end if;
 				when fs =>
@@ -194,6 +212,13 @@ begin
 					if sensor_l = '1' and sensor_m = '0' and sensor_r = '1' then
 						new_state <= rst;
 					end if;
+				when ss =>
+					count_reset <= '0';
+					motor_l_direction <= '0';
+					motor_l_reset <= '1';
+					motor_r_direction <= '0';
+					motor_r_reset <= '1';
+					new_state <= ss;
 			end case;
 		end if;
 	end process;
