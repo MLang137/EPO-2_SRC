@@ -15,6 +15,7 @@
 //           the COM port
 //--------------------------------------------------------------
 */
+
 void initSio(HANDLE hSerial){
 
     COMMTIMEOUTS timeouts ={0};
@@ -56,18 +57,18 @@ void initSio(HANDLE hSerial){
 //              buffer buffRead
 //--------------------------------------------------------------
 */
-bool readByte(HANDLE hSerial, char *buffRead) {
+char readByte(HANDLE hSerial) {
 
     DWORD dwBytesRead = 0;
-
-    if (!ReadFile(hSerial, buffRead, 1, &dwBytesRead, NULL))
+    char *buff;
+    buff = calloc('i', sizeof(char)); //initializing array to avoid reading error. 
+    if (!ReadFile(hSerial, buff, 1, &dwBytesRead, NULL))
     {
         printf("error reading byte from input buffer \n");
-        return false;
     }
-    printf("Byte read from read buffer is: %c \n", buffRead[0]);
-    return true;
+    return(buff[0]);
 }
+
 
 /*--------------------------------------------------------------
 // Function: writeByte
@@ -91,13 +92,15 @@ int writeByte(HANDLE hSerial, char *buffWrite){
 
 
 int maze[13][13];
+int RouteCount;  
 
+
+//defining structs for easy point representation. 
 struct Pos
 {
     int x;
     int y;
 }; typedef struct Pos Pos;
-
 struct node
 {
     Pos pt;
@@ -106,7 +109,7 @@ struct node
     struct node *next;
 };
 typedef struct node node;
-
+//creating queue for the BFS algorithm.
 struct queue
 {
     int count;
@@ -114,23 +117,24 @@ struct queue
     node *rear;
 };
 typedef struct queue queue;
-
+//Initializing queue.
 void initialize(queue *q)
 {
     q->count = 0;
     q->front = NULL;
     q->rear = NULL;
 }
-
+//Function to check if the queue is empty. 
 int isempty(queue *q)
 {
     return (q->rear == NULL);
 }
-
+//function to add elements to queue.
 void enqueue(queue *q, Pos point, int value)
 {
     if (q->count < FULL)
     {
+        //Creating new node, and adding it to the back of the queue.
         node *tmp;
         tmp = malloc(sizeof(node));
         tmp->dist = value;
@@ -152,10 +156,9 @@ void enqueue(queue *q, Pos point, int value)
         printf("List is full\n");
     }
 }
-
 bool dequeue(queue *q)
 {
-    
+    // removing the front node in the queue, then assigning to front pointer to the next node.
     if (q->front == NULL){return false;}
     node *tmp = q->front;
     
@@ -165,7 +168,7 @@ bool dequeue(queue *q)
     free(tmp);
     return true;
 }
-
+    // function to print out the queue.
 void display(node *head)
 {
     if(head == NULL)
@@ -178,7 +181,7 @@ void display(node *head)
         display(head->next);
     }
 }
-
+// check is the target is reached.
 bool TargetReached(Pos Target, Pos pos)
 {
     if (pos.x == Target.x && pos.y == Target.y)
@@ -189,7 +192,7 @@ bool TargetReached(Pos Target, Pos pos)
         return false;
     }
 }
-
+// 
 void readInput()
 {
 int minecount,i;
@@ -225,12 +228,14 @@ for(i = 0; i < minecount; i++)
 }
 }
 
+//function to add mine if one is detected,
 bool addMine(Pos mine)
 {
     maze[mine.x][mine.y] = -1;
     return true;
 }
 
+//switch function to turn the base numbers in actual cordinates.
 Pos BasetoCord(int base)
 {   
     Pos newCord;
@@ -289,9 +294,11 @@ Pos BasetoCord(int base)
     } 
             return newCord;
 }
-
+// creating a array representation of the maze.
 void CreateMap(void){
 int i,j;
+
+
 // Creating Map Full of -1
 for (i = 0; i < 13; i++){
     for (j = 0; j < 13; j++){
@@ -303,7 +310,7 @@ for (i = 0; i < 13; i++){
 for (i = 4; i < 10 ; i++){
     if (i == 4 || i == 6 || i == 8){
         for (j = 0; j < 13; j++){
-          maze[i][j] = 0;
+          maze[i][j]  = 0;
         }
     }
 }
@@ -312,7 +319,7 @@ for (i = 4; i < 10 ; i++){
 for (i = 4; i < 9 ; i++){
     if (i == 4 || i == 6 || i == 8){
         for (j = 0; j < 13; j++){
-          maze[j][i] = 0;
+          maze[i][j]  = 0;
         }
     }
 }
@@ -321,7 +328,7 @@ for (i = 4; i < 9 ; i++){
 for (i = 2; i < 11 ; i++){
     if (i == 2 || i == 10){
         for (j = 2; j < 11; j++){
-          maze[j][i] = 0;
+          maze[i][j]  = 0;
         }
     }
 }
@@ -329,17 +336,19 @@ for (i = 2; i < 11 ; i++){
 for (i = 2; i < 11 ; i++){
     if (i == 2 ||i == 10){
         for (j = 2; j < 11; j++){
-          maze[i][j] = 0;
+          maze[i][j]  = 0;
         }
     }
 }
 }
+// checking if cell is within the walls of the maze.
 bool CheckCell(int row, int col){
 
    return (row >= 0) && (row < 13) &&
            (col >= 0) && (col < 13);
 
 }
+//function to print the maze.
 void PrintMaze(){
      for (int i = 0; i < 13; i++){
         for (int j = 0; j < 13; j++){
@@ -349,7 +358,7 @@ void PrintMaze(){
         printf("\n");
     }
 }
-
+//BFS algorithm.
 bool Algorithm(Pos source, Pos goal)
 {
     //Creating queue and assigning memory
@@ -393,6 +402,9 @@ bool Algorithm(Pos source, Pos goal)
 
             if(CheckCell(row,col) && maze[row][col] == 0 && !visited[row][col])
             {
+                //When cell is valid and not visited yet, add to queue and mark with
+                //distance of current cell+1.
+
                 visited[row][col] = true;
                 maze[row][col] = dist+1;
                 Pos Neighbour = {row,col};
@@ -414,6 +426,8 @@ bool scanMap(Pos source){
 
 
 }
+//Using Lee turn find a route back. 
+
 char * RoutePlanner(Pos Source, Pos Goal, int SourceNum)
 {
     int dix[4] = {-1,0,0,1};
@@ -479,6 +493,7 @@ Buffer = (char*)calloc(maze[Source.x][Source.y], sizeof(char));
 static char *RouteLRF;
 RouteLRF = (char*)calloc(maze[Source.x][Source.y], sizeof(char));
 
+//a lot of different representations of the route.
 for(j =0; j < maze[Source.x][Source.y]; j++)
 {
 
@@ -491,32 +506,35 @@ for(j =0; j < maze[Source.x][Source.y]; j++)
 free(Route);
 RouteLRF[0] = 'x';
 // t links, p rechts, x vooruit.
+RouteCount=0;
 for(j = 1; j < maze[Source.x][Source.y]; j++){
+    if(j%2 == 0)
+    {    
         if (Buffer[j-1] == Buffer[j]){
-            RouteLRF[j] = 'x'; 
+            RouteLRF[RouteCount] = 'x'; 
         }
         else if(Buffer[j] == 'E' && direction == 1){
-            RouteLRF[j] = 'p';
+            RouteLRF[RouteCount] = 'p';
             direction = 2;
         }
         else if(Buffer[j] == 'W' && direction == 1){
-            RouteLRF[j] = 't';
+            RouteLRF[RouteCount] = 't';
             direction = 4;
         }
         else if(Buffer[j] == 'S' && direction == 2){
-            RouteLRF[j] = 'p';
+            RouteLRF[RouteCount] = 'p';
             direction = 3;
         }
         else if(Buffer[j] == 'N' && direction == 2){
-            RouteLRF[j] = 't';
+            RouteLRF[RouteCount] = 't';
             direction = 1;
         }
         else if(Buffer[j] == 'E' && direction == 3){
-            RouteLRF[j] = 't';
+            RouteLRF[RouteCount] = 't';
             direction = 2;
         }
         else if(Buffer[j] == 'W' && direction == 3){
-            RouteLRF[j] = 'p';
+            RouteLRF[RouteCount] = 'p';
             direction = 4;
         }
         else if(Buffer[j] == 'N' && direction == 4){
@@ -524,9 +542,13 @@ for(j = 1; j < maze[Source.x][Source.y]; j++){
             direction = 1;
         }
         else if(Buffer[j] == 'S' && direction == 4){
-            RouteLRF[j] = 't';
+            RouteLRF[RouteCount] = 't';
             direction = 3;
         }
+        RouteCount++;
+    }
+            
+            
 }
 free(Buffer);
 return RouteLRF;
@@ -534,77 +556,33 @@ return RouteLRF;
 }
 //o is ontvangen
 
-void sendBytes(Pos Source){
-    int direction;
-    int i;
-    HANDLE hSerial;
 
 
-    char byteBuffer[BUFSIZ+1];
-
-    /*----------------------------------------------------------
-    // Open COMPORT for reading and writing
-    //----------------------------------------------------------*/
-    hSerial = CreateFile(COMPORT,
-        GENERIC_READ | GENERIC_WRITE,
-        0,
-        0,
-        OPEN_EXISTING,
-        FILE_ATTRIBUTE_NORMAL,
-        0
-    );
-
-    if(hSerial == INVALID_HANDLE_VALUE){
-        if(GetLastError()== ERROR_FILE_NOT_FOUND){
-            /*serial port does not exist. Inform user.*/
-            printf(" serial port does not exist \n");
-        }
-        /*some other error occurred. Inform user.*/
-        printf(" some other error occured. Inform user.\n");
-    }
-
-    /*----------------------------------------------------------
-    // Initialize the parameters of the COM port
-    //----------------------------------------------------------*/
-
-    initSio(hSerial);
-
+void goTo(int begin, int end){
+    Pos Source = BasetoCord(begin); 
+    Pos Goal = BasetoCord(end); 
+    Algorithm(Source, Goal);
     char *buffer;
-    buffer = RoutePlanner(BasetoCord(10),BasetoCord(1),10);
-
+    buffer = RoutePlanner(Source,Goal,begin);
     
-    
-    for(i = 0; i < maze[Source.x][Source.y]; i++){
-        printf("%c ",buffer[i]);
+    for(int i = 0; i <RouteCount; i++){
+        printf("%c ", buffer[i]);
     }
-    printf("Press Any Key to Continue\n");
-    getchar();
-        writeByte(hSerial, (buffer+i));
-        printf("Press Any Key to Continue\n");
-        getchar();
-    	readByte(hSerial, )
-
+    printf("\n");
+    //sendBytes(Source,Goal,begin);
 }
+
 
 
 int main()
 {
     int minecount;
     int i;
-    int SourceBase = 10;
-    ;
-    Pos Source = BasetoCord(SourceBase); 
-    Pos Goal = BasetoCord(1); 
     CreateMap();
-    Pos Mines[5] = {{5,4},{6,3},{7,2},{4,6},{5,5}};
-    for(i = 0; i < 5; i++){
-        addMine(Mines[i]);
-    }
-    
-    Algorithm(Source, Goal);
     printf("\n");
+    goTo(10,4);
     PrintMaze();
-    sendBytes(Source);
+    
  
     return 0;
 }

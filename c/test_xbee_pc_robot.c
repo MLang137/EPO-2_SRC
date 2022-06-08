@@ -52,16 +52,16 @@ void initSio(HANDLE hSerial){
 // Description: reads a single byte from the COM port into
 //              buffer buffRead
 //--------------------------------------------------------------
-int readByte(HANDLE hSerial, char *buffRead) {
+char readByte(HANDLE hSerial) {
 
     DWORD dwBytesRead = 0;
-
-    if (!ReadFile(hSerial, buffRead, 1, &dwBytesRead, NULL))
+    char *tmp;
+    tmp = calloc('i', sizeof(char));
+    if (!ReadFile(hSerial, tmp, 1, &dwBytesRead, NULL))
     {
         printf("error reading byte from input buffer \n");
     }
-    printf("Byte read from read buffer is: %c \n Bytes Read: %d \n", buffRead[dwBytesRead],dwBytesRead);
-    return(0);
+    return(tmp[0]);
 }
 
 //--------------------------------------------------------------
@@ -86,9 +86,9 @@ int main()
 {
     HANDLE hSerial;
 
-
+    char buffRead;
     char byteBuffer[BUFSIZ+1];
-
+    char tmp;
     //----------------------------------------------------------
     // Open COMPORT for reading and writing
     //----------------------------------------------------------
@@ -123,7 +123,14 @@ int main()
             break;
 
         writeByte(hSerial, byteBuffer);
-        readByte(hSerial, byteBuffer);
+        for( int q = 0 ; q<50; q++){
+            tmp = buffRead;
+            buffRead = readByte(hSerial);
+          //  if (tmp != buffRead){
+                printf("Byte Read: %c \n", buffRead);
+           }
+       // }
+        
     }
 
     printf("ZIGBEE IO DONE!\n");
