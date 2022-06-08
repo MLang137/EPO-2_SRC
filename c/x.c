@@ -7,6 +7,26 @@
 #define COMPORT "COM9"
 #define BAUDRATE CBR_9600
 
+int maze[13][13] =
+{
+    {-1,-1,-1,-1,0,-1,0,-1,0,-1,-1,-1,-1}, //1
+    {-1,-1,-1,-1,0,-1,0,-1,0,-1,-1,-1,-1}, //2
+    {-1,-1, 0, 0,0, 0,0, 0,0, 0, 0,-1,-1}, //3
+    {-1,-1, 0,-1,0,-1,0,-1,0,-1, 0,-1,-1}, //4
+    { 0, 0, 0, 0,0, 0,0 ,0,0, 0, 0, 0, 0}, //5
+    {-1,-1, 0,-1,0,-1,0,-1,0,-1, 0,-1,-1}, //6
+    { 0, 0, 0, 0,0, 0,0 ,0,0, 0, 0, 0, 0}, //7
+    {-1,-1, 0,-1,0,-1,0,-1,0,-1, 0,-1,-1}, //8
+    { 0, 0, 0, 0,0, 0,0 ,0,0, 0, 0, 0, 0}, //9
+    {-1,-1, 0,-1,0,-1,0,-1,0,-1, 0,-1,-1}, //10
+    {-1,-1, 0, 0,0, 0,0 ,0,0 ,0, 0,-1,-1}, //11
+    {-1,-1,-1,-1,0,-1,0,-1,0,-1,-1,-1,-1}, //12
+    {-1,-1,-1,-1,0,-1,0,-1,0,-1,-1,-1,-1}, //13
+    //1, 2, 3, 4,5, 6,7, 8,9,10,11,12,13
+};
+int mazecopy[13][13];
+int RouteCount;  
+
 /*--------------------------------------------------------------
 // Function: initSio
 // Description: intializes the parameters as Baudrate, Bytesize,
@@ -83,29 +103,10 @@ int writeByte(HANDLE hSerial, char *buffWrite){
     {
         printf("error writing byte to output buffer \n");
     }
-    printf("Byte written to write buffer is: %c \n", buffWrite[0]);
 
     return(0);
 }
 
-int maze[13][13] =
-{
-    {-1,-1,-1,-1,0,-1,0,-1,0,-1,-1,-1,-1}, //1
-    {-1,-1,-1,-1,0,-1,0,-1,0,-1,-1,-1,-1}, //2
-    {-1,-1, 0, 0,0, 0,0, 0,0, 0, 0,-1,-1}, //3
-    {-1,-1, 0,-1,0,-1,0,-1,0,-1, 0,-1,-1}, //4
-    { 0, 0, 0, 0,0, 0,0 ,0,0, 0, 0, 0, 0}, //5
-    {-1,-1, 0,-1,0,-1,0,-1,0,-1, 0,-1,-1}, //6
-    { 0, 0, 0, 0,0, 0,0 ,0,0, 0, 0, 0, 0}, //7
-    {-1,-1, 0,-1,0,-1,0,-1,0,-1, 0,-1,-1}, //8
-    { 0, 0, 0, 0,0, 0,0 ,0,0, 0, 0, 0, 0}, //9
-    {-1,-1, 0,-1,0,-1,0,-1,0,-1, 0,-1,-1}, //10
-    {-1,-1, 0, 0,0, 0,0 ,0,0 ,0, 0,-1,-1}, //11
-    {-1,-1,-1,-1,0,-1,0,-1,0,-1,-1,-1,-1}, //12
-    {-1,-1,-1,-1,0,-1,0,-1,0,-1,-1,-1,-1}, //13
-    //1, 2, 3, 4,5, 6,7, 8,9,10,11,12,13
-};
-int RouteCount;  
 
 
 //defining structs for easy point representation. 
@@ -276,11 +277,22 @@ bool CheckCell(int row, int col){
            (col >= 0) && (col < 13);
 
 }
+void copyMaze()
+{
+    for (int x=0 ; x < 13; x++)
+        {
+            for (int y=0 ; y < 13; y++)
+                {
+                     mazecopy[x][y] = maze[x][y];
+                }
+        }
+}
+
 //function to print the maze.
 void PrintMaze(){
      for (int i = 0; i < 13; i++){
         for (int j = 0; j < 13; j++){
-             printf( "  %d \t",maze[i][j]);
+             printf( " %d \t",mazecopy[i][j]);
         }
         printf("\n"); 
         printf("\n");
@@ -299,15 +311,15 @@ bool Algorithm(Pos source, Pos goal)
     int dist = 1;
     int dix[4] = {-1,0,0,1};
     int diy[4] = {0,-1,1,0};
-
-
+    
+    copyMaze();
 
     //Creating visited map
     bool visited[13][13];
     memset(visited, false, sizeof(visited));
     visited[goal.x][goal.y] = true;
     //Marking goal cell with 1.
-    maze[goal.x][goal.y] = 1;
+    mazecopy[goal.x][goal.y] = 1;
 
     node *CurrNode;
 
@@ -328,13 +340,13 @@ bool Algorithm(Pos source, Pos goal)
             int row = CurrPos.x + dix[p];
             int col = CurrPos.y + diy[p];
 
-            if(CheckCell(row,col) && maze[row][col] == 0 && !visited[row][col])
+            if(CheckCell(row,col) && mazecopy[row][col] == 0 && !visited[row][col])
             {
                 //When cell is valid and not visited yet, add to queue and mark with
                 //distance of current cell+1.
 
                 visited[row][col] = true;
-                maze[row][col] = dist+1;
+                mazecopy[row][col] = dist+1;
                 Pos Neighbour = {row,col};
                 enqueue(q, Neighbour, dist+1);
             } 
@@ -366,7 +378,7 @@ route * RoutePlanner(Pos Source, Pos Goal, char Direction)
 
 
 
-    int count = maze[Source.x][Source.y];
+    int count = mazecopy[Source.x][Source.y];
     Pos CurrPos = Source;
 
     Pos *Route;
@@ -382,13 +394,13 @@ while(!TargetReached(Goal,CurrPos)){
             int rowlast = CurrPos.x + pdx;
             int collast = CurrPos.y + pdy;
 
-        if(maze[rowlast][collast] == count-1  && i != 0){
+        if(mazecopy[rowlast][collast] == count-1  && i != 0){
                 CurrPos.x += pdx;
                 CurrPos.y += pdy;
                 Route[i].x = pdx;
                 Route[i].y = pdy;
         }
-        else if (maze[row][col] == count-1)
+        else if (mazecopy[row][col] == count-1)
             {
                 pdx = dix[p];
                 pdy = diy[p];
@@ -404,14 +416,14 @@ while(!TargetReached(Goal,CurrPos)){
 }
 
 int j;
-int BufferLength = maze[Source.x][Source.y];
+int BufferLength = mazecopy[Source.x][Source.y];
 char *Buffer;
-Buffer = (char*)calloc(maze[Source.x][Source.y], sizeof(char));
+Buffer = (char*)calloc(mazecopy[Source.x][Source.y], sizeof(char));
 static route *RouteLRF;
-RouteLRF = (route*)malloc(maze[Source.x][Source.y]*sizeof(route));
+RouteLRF = (route*)malloc(mazecopy[Source.x][Source.y]*sizeof(route));
 
 //a lot of different representations of the route.
-for(j =0; j < maze[Source.x][Source.y]; j++)
+for(j =0; j < mazecopy[Source.x][Source.y]; j++)
 {
 
     
@@ -429,7 +441,7 @@ RouteCount=1;
 CurrPos = Source;
 CurrPos.x += Route[0].x;
 CurrPos.y += Route[0].y;
-for(j = 1; j < maze[Source.x][Source.y]; j++){
+for(j = 1; j < mazecopy[Source.x][Source.y]; j++){
     if(j%2 == 0)
     {    
         if (Buffer[j-1] == Buffer[j]){
@@ -489,7 +501,7 @@ for(j = 1; j < maze[Source.x][Source.y]; j++){
             RouteLRF[RouteCount].cords.y = CurrPos.y;
         }
         RouteCount++;
-    }
+   }
         CurrPos.x += Route[j].x;
         CurrPos.y += Route[j].y;
             
@@ -555,23 +567,27 @@ int sendRoute(route *route,Pos Goal)
 
     printf("Press any key to start the navigation.\n");
     getchar();
-    writeByte(hSerial,&route->instruction);
+    writeByte(hSerial,&route->instruction); 
     Sleep(20);
-    writeByte(hSerial,&(route+1)->instruction);
-
+    writeByte(hSerial,&(route+1)->instruction); 
+    int crossingcount = 0;
     for(i = 2; i < RouteCount; i++)
     {
-        printf("%c ",route[i].instruction);
-        getchar();
-        if(i == 3){mineFlag = true; minePos = i; break;}
-    /*  while(readByte(hSerial) == '/')
-        {
+        if(crossingcount%2 == 0)
+        {   
+            printf("%c ",route[i].instruction);
             writeByte(hSerial,&(route+i)->instruction);
-        } 
-        if(readByte(hSerial) == 'm'){mineFlag = true; minePos = i;break;}
-        Sleep(50);
-    */
-      
+        }
+        while(readByte(hSerial) == '/')
+        {
+
+        }   
+                   crossingcount++;
+                   while(readByte(hSerial) =='o')
+                   {
+
+                   }
+        if(readByte(hSerial) == '?'){mineFlag = true; minePos = i; break;}  
     }
      if(mineFlag)
     {
@@ -588,7 +604,7 @@ int sendRoute(route *route,Pos Goal)
     }
 
 
-
+    CloseHandle(hSerial);
     return 0;
 }
 
@@ -603,12 +619,12 @@ void goTo(int begin, int end){
     PrintMaze();
 
     sendRoute(route,Goal);
- 
+  
 }
 
 
 int main()
 {
-    goTo(10,3);
+    goTo(1,3);
     return 0;
 }
