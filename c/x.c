@@ -26,6 +26,7 @@ int maze[13][13] =
 };
 int mazecopy[13][13];
 int RouteCount;  
+int runtimes = 0;
 
 /*--------------------------------------------------------------
 // Function: initSio
@@ -103,7 +104,7 @@ int writeByte(HANDLE hSerial, char *buffWrite){
     {
         printf("error writing byte to output buffer \n");
     }
-
+        printf("Byte written to write buffer is: %c \n", buffWrite[0]);
     return(0);
 }
 
@@ -442,8 +443,8 @@ CurrPos = Source;
 CurrPos.x += Route[0].x;
 CurrPos.y += Route[0].y;
 for(j = 1; j < mazecopy[Source.x][Source.y]; j++){
-    if(j%2 == 0)
-    {    
+   // if(j%2 == 0)
+   // {    
         if (Buffer[j-1] == Buffer[j]){
             RouteLRF[RouteCount].instruction = 'x'; 
             RouteLRF[RouteCount].direction = RouteLRF[RouteCount-1].direction;
@@ -501,7 +502,7 @@ for(j = 1; j < mazecopy[Source.x][Source.y]; j++){
             RouteLRF[RouteCount].cords.y = CurrPos.y;
         }
         RouteCount++;
-   }
+  // }
         CurrPos.x += Route[j].x;
         CurrPos.y += Route[j].y;
             
@@ -521,23 +522,15 @@ char flipDirection(char old)
         else if(old == 'w'){return 'e';}
 }
 
-int sendRoute(route *route,Pos Goal)
+int sendRoute(route *firstroute,Pos Goal)
 {
     static HANDLE hSerial;
+    route *route = firstroute;
     bool mineFlag = false;
     int minePos;
     int dx = 0;
     int dy = 0;
     int i = 0;
-    char newDirection;
-    //Printing all instructions before sending.
-    for(int i = 0; i<RouteCount; i++)
-    {
-        printf("Instruction %d : %c, direction %c, x: %d, y: %d\n",
-        i+1,route[i].instruction,route[i].direction,route[i].cords.x,route[i].cords.y);
-    }
-         char byteBuffer[BUFSIZ+1];
-
     /*----------------------------------------------------------
     // Open COMPORT for reading and writing
     //----------------------------------------------------------*/
@@ -563,46 +556,62 @@ int sendRoute(route *route,Pos Goal)
     // Initialize the parameters of the COM port
     //----------------------------------------------------------*/
 
+   
     initSio(hSerial);
+    //Printing all instructions before sending.
+    for(int i = 0; i<RouteCount; i++)
+    {
+        printf("Instruction %d : %c, direction %c, x: %d, y: %d\n",
+        i+1,route[i].instruction,route[i].direction,route[i].cords.x,route[i].cords.y);
+    }
+         char byteBuffer[BUFSIZ+1];
 
     printf("Press any key to start the navigation.\n");
     getchar();
     writeByte(hSerial,&route->instruction); 
     Sleep(20);
     writeByte(hSerial,&(route+1)->instruction); 
-    int crossingcount = 0;
+     while(readByte(hSerial) =='o')
+                   {
+
+                   }
     for(i = 2; i < RouteCount; i++)
     {
-        if(crossingcount%2 == 0)
-        {   
-            printf("%c ",route[i].instruction);
-            writeByte(hSerial,&(route+i)->instruction);
-        }
+        Sleep(150);
+        writeByte(hSerial,&(route+i)->instruction);
+        
         while(readByte(hSerial) == '/')
         {
-
+            
+        }  
+            if(readByte(hSerial) == '?'){
+            printf("Mine Detected\n");
+            Sleep(750);
+            if(route[i].direction == 'n'){dx = -1;}
+        else if(route[i].direction == 'e'){dy = 1;}
+        else if(route[i].direction == 's'){dx = 1;}
+        else if(route[i].direction == 'w'){dy = -1;}
+        
+        addMine((Pos){(route[minePos].cords.x+dx),(route[i].cords.y+dy)});
+        Algorithm(route[minePos].cords,Goal);
+        route =  RoutePlanner( (Pos)route[minePos].cords, Goal, 
+                   flipDirection((char)route[minePos].direction));
+        for(int i = 0; i<RouteCount; i++)
+            {
+                printf("Instruction %d : %c, direction %c, x: %d, y: %d\n",
+                i+1,route[i].instruction,route[i].direction,route[i].cords.x,route[i].cords.y);
+            }
+                   continue;
         }   
-                   crossingcount++;
+                   
                    while(readByte(hSerial) =='o')
                    {
 
                    }
-        if(readByte(hSerial) == '?'){mineFlag = true; minePos = i; break;}  
+        
+        
     }
-     if(mineFlag)
-    {
-             if(route[i].direction == 'n'){dx = -1;}
-        else if(route[i].direction == 'e'){dy = 1;}
-        else if(route[i].direction == 's'){dx = 1;}
-        else if(route[i].direction == 'w'){dy = -1;}
-
-
-        addMine((Pos){(route[minePos].cords.x+dx),(route[i].cords.y+dy)});
-        Algorithm(route[minePos].cords,Goal);
-        sendRoute( RoutePlanner( (Pos)route[minePos].cords, Goal, 
-                   flipDirection((char)route[minePos].direction)),Goal);
-    }
-
+     
 
     CloseHandle(hSerial);
     return 0;
@@ -625,6 +634,6 @@ void goTo(int begin, int end){
 
 int main()
 {
-    goTo(1,3);
+    goTo(7,9);
     return 0;
 }
