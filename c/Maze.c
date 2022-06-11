@@ -3,10 +3,30 @@
 #include <stdlib.h>
 #include <string.h>
 #include <Windows.h>
-
 #define FULL 100
 #define COMPORT "COM9"
 #define BAUDRATE CBR_9600
+
+int maze[13][13] =
+{
+    {-1,-1,-1,-1,0,-1,0,-1,0,-1,-1,-1,-1}, //1
+    {-1,-1,-1,-1,0,-1,0,-1,0,-1,-1,-1,-1}, //2
+    {-1,-1, 0, 0,0, 0,0, 0,0, 0, 0,-1,-1}, //3
+    {-1,-1, 0,-1,0,-1,0,-1,0,-1, 0,-1,-1}, //4
+    { 0, 0, 0, 0,0, 0,0 ,0,0, 0, 0, 0, 0}, //5
+    {-1,-1, 0,-1,0,-1,0,-1,0,-1, 0,-1,-1}, //6
+    { 0, 0, 0, 0,0, 0,0 ,0,0, 0, 0, 0, 0}, //7
+    {-1,-1, 0,-1,0,-1,0,-1,0,-1, 0,-1,-1}, //8
+    { 0, 0, 0, 0,0, 0,0 ,0,0, 0, 0, 0, 0}, //9
+    {-1,-1, 0,-1,0,-1,0,-1,0,-1, 0,-1,-1}, //10
+    {-1,-1, 0, 0,0, 0,0 ,0,0 ,0, 0,-1,-1}, //11
+    {-1,-1,-1,-1,0,-1,0,-1,0,-1,-1,-1,-1}, //12
+    {-1,-1,-1,-1,0,-1,0,-1,0,-1,-1,-1,-1}, //13
+    //1, 2, 3, 4,5, 6,7, 8,9,10,11,12,13
+};
+int mazecopy[13][13];
+int RouteCount;  
+int runtimes = 0;
 
 /*--------------------------------------------------------------
 // Function: initSio
@@ -84,15 +104,10 @@ int writeByte(HANDLE hSerial, char *buffWrite){
     {
         printf("error writing byte to output buffer \n");
     }
-    printf("Byte written to write buffer is: %c \n", buffWrite[0]);
-
+        printf("Byte written to write buffer is: %c \n", buffWrite[0]);
     return(0);
 }
 
-
-
-int maze[13][13];
-int RouteCount;  
 
 
 //defining structs for easy point representation. 
@@ -101,6 +116,13 @@ struct Pos
     int x;
     int y;
 }; typedef struct Pos Pos;
+
+struct route
+{
+    char instruction;
+    char direction;
+    Pos cords;
+}; typedef struct route route;
 struct node
 {
     Pos pt;
@@ -169,18 +191,6 @@ bool dequeue(queue *q)
     return true;
 }
     // function to print out the queue.
-void display(node *head)
-{
-    if(head == NULL)
-    {
-        printf("NULL\n");
-    }
-    else
-    {
-        printf("count: %d, x: %d, y:%d\n", head -> dist, head->pt.x, head->pt.y);
-        display(head->next);
-    }
-}
 // check is the target is reached.
 bool TargetReached(Pos Target, Pos pos)
 {
@@ -192,42 +202,7 @@ bool TargetReached(Pos Target, Pos pos)
         return false;
     }
 }
-// 
-void readInput()
-{
-int minecount,i;
-Pos mine;
-char direction;
-scanf("%d", &minecount);
-int goal,source;
-
-for(i = 0; i < minecount; i++)
-{
-    scanf("%d %d %c",&mine.x,&mine.y,&direction);
-    // Read x and y of intersections and add 2 to place them at the right cords.
-    mine.x = mine.x+2;
-    mine.y = mine.y+2;
-    switch(direction)
-    {
-        case 'n':
-            mine.x--;
-            break;
-        case 'e':
-            mine.y++;
-            break;
-        case 's':
-            mine.x++;
-            break;
-        case 'w':
-            mine.y--;
-            break;
-        default:
-        break;
-    }
-        maze[mine.x][mine.y] = -1;
-}
-}
-
+ 
 //function to add mine if one is detected,
 bool addMine(Pos mine)
 {
@@ -295,52 +270,7 @@ Pos BasetoCord(int base)
             return newCord;
 }
 // creating a array representation of the maze.
-void CreateMap(void){
-int i,j;
 
-
-// Creating Map Full of -1
-for (i = 0; i < 13; i++){
-    for (j = 0; j < 13; j++){
-        maze[i][j] = -1;
-    }
-}
-
-// Creating horizontal Paths.
-for (i = 4; i < 10 ; i++){
-    if (i == 4 || i == 6 || i == 8){
-        for (j = 0; j < 13; j++){
-          maze[i][j]  = 0;
-        }
-    }
-}
-
-// Creating vertical Paths.
-for (i = 4; i < 9 ; i++){
-    if (i == 4 || i == 6 || i == 8){
-        for (j = 0; j < 13; j++){
-          maze[i][j]  = 0;
-        }
-    }
-}
-
-// Creating In between paths
-for (i = 2; i < 11 ; i++){
-    if (i == 2 || i == 10){
-        for (j = 2; j < 11; j++){
-          maze[i][j]  = 0;
-        }
-    }
-}
-
-for (i = 2; i < 11 ; i++){
-    if (i == 2 ||i == 10){
-        for (j = 2; j < 11; j++){
-          maze[i][j]  = 0;
-        }
-    }
-}
-}
 // checking if cell is within the walls of the maze.
 bool CheckCell(int row, int col){
 
@@ -348,11 +278,22 @@ bool CheckCell(int row, int col){
            (col >= 0) && (col < 13);
 
 }
+void copyMaze()
+{
+    for (int x=0 ; x < 13; x++)
+        {
+            for (int y=0 ; y < 13; y++)
+                {
+                     mazecopy[x][y] = maze[x][y];
+                }
+        }
+}
+
 //function to print the maze.
 void PrintMaze(){
      for (int i = 0; i < 13; i++){
         for (int j = 0; j < 13; j++){
-             printf( "  %d \t",maze[i][j]);
+             printf( " %d  \t",mazecopy[i][j]);
         }
         printf("\n"); 
         printf("\n");
@@ -371,15 +312,15 @@ bool Algorithm(Pos source, Pos goal)
     int dist = 1;
     int dix[4] = {-1,0,0,1};
     int diy[4] = {0,-1,1,0};
-
-
+    
+    copyMaze();
 
     //Creating visited map
     bool visited[13][13];
     memset(visited, false, sizeof(visited));
     visited[goal.x][goal.y] = true;
     //Marking goal cell with 1.
-    maze[goal.x][goal.y] = 1;
+    mazecopy[goal.x][goal.y] = 1;
 
     node *CurrNode;
 
@@ -400,13 +341,13 @@ bool Algorithm(Pos source, Pos goal)
             int row = CurrPos.x + dix[p];
             int col = CurrPos.y + diy[p];
 
-            if(CheckCell(row,col) && maze[row][col] == 0 && !visited[row][col])
+            if(CheckCell(row,col) && mazecopy[row][col] == 0 && !visited[row][col])
             {
                 //When cell is valid and not visited yet, add to queue and mark with
                 //distance of current cell+1.
 
                 visited[row][col] = true;
-                maze[row][col] = dist+1;
+                mazecopy[row][col] = dist+1;
                 Pos Neighbour = {row,col};
                 enqueue(q, Neighbour, dist+1);
             } 
@@ -414,43 +355,30 @@ bool Algorithm(Pos source, Pos goal)
     } return false;
 }
 
-bool scanMap(Pos source){
-    // 120 time to scan the entire map for mines, after 120 sec the bot
-    // has to be returned and a new mine will be placed in the map.
-    // this mine is the 'treasure', the goal is to find this treasure.
-
-    // t links, p rechts, x vooruit.
-
-
-
-
-
+char StartDirection(int SourceNum)
+{
+        
+        if(SourceNum == 1||SourceNum == 2||SourceNum == 3){
+            return 'N';
+        } else if (SourceNum == 4||SourceNum == 5 ||SourceNum == 6){
+            return 'W';
+        } else if( SourceNum == 7||SourceNum == 8|| SourceNum ==9){
+            return 'S';
+        } else if( SourceNum == 10||SourceNum == 11||SourceNum == 12){
+            return 'E';
+        }
+    
 }
-//Using Lee turn find a route back. 
-
-char * RoutePlanner(Pos Source, Pos Goal, int SourceNum)
+route * RoutePlanner(Pos Source, Pos Goal, char Direction)
 {
     int dix[4] = {-1,0,0,1};
     int diy[4] = {0,-1,1,0};
     int p;
     int pdx = 0;
     int pdy = 0;
-    int direction;
+    PrintMaze();
 
-
-    
-        if(SourceNum == 1||SourceNum == 2||SourceNum == 3){
-            direction = 1;
-        } else if (SourceNum == 4||SourceNum == 5 ||SourceNum == 6){
-            direction = 4;
-        } else if( SourceNum == 7||SourceNum == 8|| SourceNum ==9){
-            direction = 3;
-        } else if( SourceNum == 10||SourceNum == 11||SourceNum == 12){
-            direction = 2;
-        }
-            
-    
-    int count = maze[Source.x][Source.y];
+    int count = mazecopy[Source.x][Source.y];
     Pos CurrPos = Source;
 
     Pos *Route;
@@ -466,13 +394,13 @@ while(!TargetReached(Goal,CurrPos)){
             int rowlast = CurrPos.x + pdx;
             int collast = CurrPos.y + pdy;
 
-        if(maze[rowlast][collast] == count-1  && i != 0){
+        if(mazecopy[rowlast][collast] == count-1  && i != 0){
                 CurrPos.x += pdx;
                 CurrPos.y += pdy;
                 Route[i].x = pdx;
                 Route[i].y = pdy;
         }
-        else if (maze[row][col] == count-1)
+        else if (mazecopy[row][col] == count-1)
             {
                 pdx = dix[p];
                 pdy = diy[p];
@@ -486,15 +414,16 @@ while(!TargetReached(Goal,CurrPos)){
        i++;
 
 }
+
 int j;
-int BufferLength = maze[Source.x][Source.y];
+int BufferLength = mazecopy[Source.x][Source.y];
 char *Buffer;
-Buffer = (char*)calloc(maze[Source.x][Source.y], sizeof(char));
-static char *RouteLRF;
-RouteLRF = (char*)calloc(maze[Source.x][Source.y], sizeof(char));
+Buffer = (char*)calloc(mazecopy[Source.x][Source.y], sizeof(char));
+static route *RouteLRF;
+RouteLRF = (route*)calloc(mazecopy[Source.x][Source.y],sizeof(route));
 
 //a lot of different representations of the route.
-for(j =0; j < maze[Source.x][Source.y]; j++)
+for(j =0; j < mazecopy[Source.x][Source.y]; j++)
 {
 
     
@@ -503,86 +432,166 @@ for(j =0; j < maze[Source.x][Source.y]; j++)
       if(Route[j].y == 1){Buffer[j] = 'E';}
        if(Route[j].y == -1){Buffer[j] = 'W';}
 }
-free(Route);
-RouteLRF[0] = 'x';
+if(Buffer[0] == Direction){RouteLRF[0].instruction = 'x';}
+else if (Buffer[0] == 'N' && Direction == 'E'){RouteLRF[0].instruction = 't';}
+else if (Buffer[0] == 'N' && Direction == 'W'){RouteLRF[0].instruction = 'p';}
+else if (Buffer[0] == 'E' && Direction == 'N'){RouteLRF[0].instruction = 'p';}
+else if (Buffer[0] == 'E' && Direction == 'S'){RouteLRF[0].instruction = 't';}
+else if (Buffer[0] == 'S' && Direction == 'E'){RouteLRF[0].instruction = 'p';}
+else if (Buffer[0] == 'S' && Direction == 'W'){RouteLRF[0].instruction = 't';}
+else if (Buffer[0] == 'W' && Direction == 'N'){RouteLRF[0].instruction = 't';}
+else if (Buffer[0] == 'W' && Direction == 'S'){RouteLRF[0].instruction = 'p';}
+RouteLRF[0].direction = Buffer[0];
+RouteLRF[0].cords = Source;
 // t links, p rechts, x vooruit.
-RouteCount=0;
-for(j = 1; j < maze[Source.x][Source.y]; j++){
-    if(j%2 == 0)
-    {    
+RouteCount=1;
+CurrPos = Source;
+CurrPos.x += Route[0].x;
+CurrPos.y += Route[0].y;
+for(j = 1; j < mazecopy[Source.x][Source.y]; j++){
+   // if(j%2 == 0)
+   // {    
         if (Buffer[j-1] == Buffer[j]){
-            RouteLRF[RouteCount] = 'x'; 
+            RouteLRF[RouteCount].instruction = 'x'; 
+            RouteLRF[RouteCount].direction = RouteLRF[RouteCount-1].direction;
+            RouteLRF[RouteCount].cords.x = CurrPos.x;
+            RouteLRF[RouteCount].cords.y = CurrPos.y;
+
         }
-        else if(Buffer[j] == 'E' && direction == 1){
-            RouteLRF[RouteCount] = 'p';
-            direction = 2;
+        else if(Buffer[j] == 'E' && RouteLRF[RouteCount-1].direction == 'N'){
+            RouteLRF[RouteCount].instruction = 'p';
+            RouteLRF[RouteCount].direction = 'E';
+            RouteLRF[RouteCount].cords.x = CurrPos.x;
+            RouteLRF[RouteCount].cords.y = CurrPos.y;
+
         }
-        else if(Buffer[j] == 'W' && direction == 1){
-            RouteLRF[RouteCount] = 't';
-            direction = 4;
+        else if(Buffer[j] == 'W' && RouteLRF[RouteCount-1].direction  == 'N'){
+            RouteLRF[RouteCount].instruction = 't';
+            RouteLRF[RouteCount].direction = 'W';
+            RouteLRF[RouteCount].cords.x = CurrPos.x;
+            RouteLRF[RouteCount].cords.y = CurrPos.y;
         }
-        else if(Buffer[j] == 'S' && direction == 2){
-            RouteLRF[RouteCount] = 'p';
-            direction = 3;
+        else if(Buffer[j] == 'S' && RouteLRF[RouteCount-1].direction  == 'E'){
+            RouteLRF[RouteCount].instruction = 'p';
+            RouteLRF[RouteCount].direction = 'S';
+            RouteLRF[RouteCount].cords.x = CurrPos.x;
+            RouteLRF[RouteCount].cords.y = CurrPos.y;
         }
-        else if(Buffer[j] == 'N' && direction == 2){
-            RouteLRF[RouteCount] = 't';
-            direction = 1;
+        else if(Buffer[j] == 'N' && RouteLRF[RouteCount-1].direction  == 'E'){
+            RouteLRF[RouteCount].instruction = 't';
+            RouteLRF[RouteCount].direction = 'N';
+            RouteLRF[RouteCount].cords.x = CurrPos.x;
+            RouteLRF[RouteCount].cords.y = CurrPos.y;
         }
-        else if(Buffer[j] == 'E' && direction == 3){
-            RouteLRF[RouteCount] = 't';
-            direction = 2;
+        else if(Buffer[j] == 'E' && RouteLRF[RouteCount-1].direction  == 'S'){
+            RouteLRF[RouteCount].instruction = 't';
+            RouteLRF[RouteCount].direction = 'E';
+            RouteLRF[RouteCount].cords.x = CurrPos.x;
+            RouteLRF[RouteCount].cords.y = CurrPos.y;
         }
-        else if(Buffer[j] == 'W' && direction == 3){
-            RouteLRF[RouteCount] = 'p';
-            direction = 4;
+        else if(Buffer[j] == 'W' && RouteLRF[RouteCount-1].direction  == 'S'){
+            RouteLRF[RouteCount].instruction = 'p';
+            RouteLRF[RouteCount].direction = 'W';
+            RouteLRF[RouteCount].cords.x = CurrPos.x;
+            RouteLRF[RouteCount].cords.y = CurrPos.y;
         }
-        else if(Buffer[j] == 'N' && direction == 4){
-            RouteLRF[j] = 'p';
-            direction = 1;
+        else if(Buffer[j] == 'N' && RouteLRF[RouteCount-1].direction  == 'W'){
+            RouteLRF[j].instruction = 'p';
+            RouteLRF[RouteCount].direction = 'N';
+            RouteLRF[RouteCount].cords.x = CurrPos.x;
+            RouteLRF[RouteCount].cords.y = CurrPos.y;
         }
-        else if(Buffer[j] == 'S' && direction == 4){
-            RouteLRF[RouteCount] = 't';
-            direction = 3;
+        else if(Buffer[j] == 'S' && RouteLRF[RouteCount-1].direction == 'W'){
+            RouteLRF[RouteCount].instruction = 't';
+            RouteLRF[RouteCount].direction = 'S';
+            RouteLRF[RouteCount].cords.x = CurrPos.x;
+            RouteLRF[RouteCount].cords.y = CurrPos.y;
         }
         RouteCount++;
-    }
+  // }
+        CurrPos.x += Route[j].x;
+        CurrPos.y += Route[j].y;
             
             
 }
-free(Buffer);
+
+RouteCount--;
 return RouteLRF;
 
 }
 //o is ontvangen
+char flipDirection(char old)
+{
+             if(old == 'N'){return 'S';}
+        else if(old == 'E'){return 'W';}
+        else if(old == 'S'){return 'N';}
+        else if(old == 'W'){return 'E';}
+}
 
+int sendRoute(Pos Goal,Pos Source, int begin)
+{
+    static HANDLE hSerial;
+    static route *route;
+    route = RoutePlanner(Source,Goal,StartDirection(begin));
+    bool mineFlag = false;
+    int minePos;
+    int i = 0;
+    int mines = 0;
+    //Printing all instructions before sending.
+    for(int i = 0; i<RouteCount; i++)
+    {
+        printf("Instruction %d : %c, direction %c, x: %d, y: %d\n",
+        i+1,route[i].instruction,route[i].direction,route[i].cords.x,route[i].cords.y);
+    }
+         char byteBuffer[BUFSIZ+1];
+
+    printf("Press any key to start the navigation.\n");
+
+
+    for(i = 0; i < RouteCount; i++)
+    {
+        printf("Intruction %d: %c\n",i,route[i].instruction);
+        if(i == 3 && mines++ < 2 ){mineFlag = true;}
+        if(mineFlag)
+        {
+            printf("Mine Detected\n");
+        addMine((Pos){(route[i].cords.x),(route[i].cords.y)});
+        Algorithm(route[i-1].cords,Goal);
+        printf("New route\n");
+        
+        char newdirection = flipDirection(route[i].direction);
+        Pos lastlocation = route[i-1].cords;
+        printf("new direction : %c, newcord : x: %d, y: %d\n",newdirection,lastlocation.x,lastlocation.y);
+        free(route);
+        route = calloc(mazecopy[lastlocation.x][lastlocation.y],sizeof(struct route));
+        route = RoutePlanner(lastlocation, Goal, newdirection);
+        i = 0;
+        mineFlag = false;
+           for(int q = 0; q<RouteCount; q++)
+    {
+        printf("Instruction %d : %c, direction %c, x: %d, y: %d\n",
+        q+1,route[q].instruction,route[q].direction,route[q].cords.x,route[q].cords.y);
+    }
+        }
+     }   
+                   
+    return 0;
+}
 
 
 void goTo(int begin, int end){
-    Pos Source = BasetoCord(begin); 
-    Pos Goal = BasetoCord(end); 
-    Algorithm(Source, Goal);
-    char *buffer;
-    buffer = RoutePlanner(Source,Goal,begin);
-    
-    for(int i = 0; i <RouteCount; i++){
-        printf("%c ", buffer[i]);
-    }
-    printf("\n");
-    //sendBytes(Source,Goal,begin);
-}
+    Pos Source =  BasetoCord(begin);
+    Pos Goal  = BasetoCord(end);
+    Algorithm(Source,Goal);
 
+
+    sendRoute(Goal,Source,begin);
+  
+}
 
 
 int main()
 {
-    int minecount;
-    int i;
-    CreateMap();
-    printf("\n");
-    goTo(10,4);
-    PrintMaze();
-    
- 
+    goTo(1,6);
     return 0;
 }

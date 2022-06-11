@@ -359,13 +359,13 @@ char StartDirection(int SourceNum)
 {
         
         if(SourceNum == 1||SourceNum == 2||SourceNum == 3){
-            return 'n';
+            return 'N';
         } else if (SourceNum == 4||SourceNum == 5 ||SourceNum == 6){
-            return 'w';
+            return 'W';
         } else if( SourceNum == 7||SourceNum == 8|| SourceNum ==9){
-            return 's';
+            return 'S';
         } else if( SourceNum == 10||SourceNum == 11||SourceNum == 12){
-            return 'e';
+            return 'E';
         }
     
 }
@@ -376,8 +376,7 @@ route * RoutePlanner(Pos Source, Pos Goal, char Direction)
     int p;
     int pdx = 0;
     int pdy = 0;
-
-
+    PrintMaze();
 
     int count = mazecopy[Source.x][Source.y];
     Pos CurrPos = Source;
@@ -421,7 +420,7 @@ int BufferLength = mazecopy[Source.x][Source.y];
 char *Buffer;
 Buffer = (char*)calloc(mazecopy[Source.x][Source.y], sizeof(char));
 static route *RouteLRF;
-RouteLRF = (route*)malloc(mazecopy[Source.x][Source.y]*sizeof(route));
+RouteLRF = (route*)calloc(mazecopy[Source.x][Source.y],sizeof(route));
 
 //a lot of different representations of the route.
 for(j =0; j < mazecopy[Source.x][Source.y]; j++)
@@ -433,9 +432,16 @@ for(j =0; j < mazecopy[Source.x][Source.y]; j++)
       if(Route[j].y == 1){Buffer[j] = 'E';}
        if(Route[j].y == -1){Buffer[j] = 'W';}
 }
-
-RouteLRF[0].instruction = 'x';
-RouteLRF[0].direction = Direction;
+if(Buffer[0] == Direction){RouteLRF[0].instruction = 'x';}
+else if (Buffer[0] == 'N' && Direction == 'E'){RouteLRF[0].instruction = 't';}
+else if (Buffer[0] == 'N' && Direction == 'W'){RouteLRF[0].instruction = 'p';}
+else if (Buffer[0] == 'E' && Direction == 'N'){RouteLRF[0].instruction = 'p';}
+else if (Buffer[0] == 'E' && Direction == 'S'){RouteLRF[0].instruction = 't';}
+else if (Buffer[0] == 'S' && Direction == 'E'){RouteLRF[0].instruction = 'p';}
+else if (Buffer[0] == 'S' && Direction == 'W'){RouteLRF[0].instruction = 't';}
+else if (Buffer[0] == 'W' && Direction == 'N'){RouteLRF[0].instruction = 't';}
+else if (Buffer[0] == 'W' && Direction == 'S'){RouteLRF[0].instruction = 'p';}
+RouteLRF[0].direction = Buffer[0];
 RouteLRF[0].cords = Source;
 // t links, p rechts, x vooruit.
 RouteCount=1;
@@ -452,52 +458,52 @@ for(j = 1; j < mazecopy[Source.x][Source.y]; j++){
             RouteLRF[RouteCount].cords.y = CurrPos.y;
 
         }
-        else if(Buffer[j] == 'E' && RouteLRF[RouteCount-1].direction == 'n'){
+        else if(Buffer[j] == 'E' && RouteLRF[RouteCount-1].direction == 'N'){
             RouteLRF[RouteCount].instruction = 'p';
-            RouteLRF[RouteCount].direction = 'e';
+            RouteLRF[RouteCount].direction = 'E';
             RouteLRF[RouteCount].cords.x = CurrPos.x;
             RouteLRF[RouteCount].cords.y = CurrPos.y;
 
         }
-        else if(Buffer[j] == 'W' && RouteLRF[RouteCount-1].direction  == 'n'){
+        else if(Buffer[j] == 'W' && RouteLRF[RouteCount-1].direction  == 'N'){
             RouteLRF[RouteCount].instruction = 't';
-            RouteLRF[RouteCount].direction = 'w';
+            RouteLRF[RouteCount].direction = 'W';
             RouteLRF[RouteCount].cords.x = CurrPos.x;
             RouteLRF[RouteCount].cords.y = CurrPos.y;
         }
-        else if(Buffer[j] == 'S' && RouteLRF[RouteCount-1].direction  == 'e'){
+        else if(Buffer[j] == 'S' && RouteLRF[RouteCount-1].direction  == 'E'){
             RouteLRF[RouteCount].instruction = 'p';
-            RouteLRF[RouteCount].direction = 's';
+            RouteLRF[RouteCount].direction = 'S';
             RouteLRF[RouteCount].cords.x = CurrPos.x;
             RouteLRF[RouteCount].cords.y = CurrPos.y;
         }
-        else if(Buffer[j] == 'N' && RouteLRF[RouteCount-1].direction  == 'e'){
+        else if(Buffer[j] == 'N' && RouteLRF[RouteCount-1].direction  == 'E'){
             RouteLRF[RouteCount].instruction = 't';
-            RouteLRF[RouteCount].direction = 'n';
+            RouteLRF[RouteCount].direction = 'N';
             RouteLRF[RouteCount].cords.x = CurrPos.x;
             RouteLRF[RouteCount].cords.y = CurrPos.y;
         }
-        else if(Buffer[j] == 'E' && RouteLRF[RouteCount-1].direction  == 's'){
+        else if(Buffer[j] == 'E' && RouteLRF[RouteCount-1].direction  == 'S'){
             RouteLRF[RouteCount].instruction = 't';
-            RouteLRF[RouteCount].direction = 'e';
+            RouteLRF[RouteCount].direction = 'E';
             RouteLRF[RouteCount].cords.x = CurrPos.x;
             RouteLRF[RouteCount].cords.y = CurrPos.y;
         }
-        else if(Buffer[j] == 'W' && RouteLRF[RouteCount-1].direction  == 's'){
+        else if(Buffer[j] == 'W' && RouteLRF[RouteCount-1].direction  == 'S'){
             RouteLRF[RouteCount].instruction = 'p';
-            RouteLRF[RouteCount].direction = 'w';
+            RouteLRF[RouteCount].direction = 'W';
             RouteLRF[RouteCount].cords.x = CurrPos.x;
             RouteLRF[RouteCount].cords.y = CurrPos.y;
         }
-        else if(Buffer[j] == 'N' && RouteLRF[RouteCount-1].direction  == 'w'){
+        else if(Buffer[j] == 'N' && RouteLRF[RouteCount-1].direction  == 'W'){
             RouteLRF[j].instruction = 'p';
-            RouteLRF[RouteCount].direction = 'n';
+            RouteLRF[RouteCount].direction = 'N';
             RouteLRF[RouteCount].cords.x = CurrPos.x;
             RouteLRF[RouteCount].cords.y = CurrPos.y;
         }
-        else if(Buffer[j] == 'S' && RouteLRF[RouteCount-1].direction == 'w'){
+        else if(Buffer[j] == 'S' && RouteLRF[RouteCount-1].direction == 'W'){
             RouteLRF[RouteCount].instruction = 't';
-            RouteLRF[RouteCount].direction = 's';
+            RouteLRF[RouteCount].direction = 'S';
             RouteLRF[RouteCount].cords.x = CurrPos.x;
             RouteLRF[RouteCount].cords.y = CurrPos.y;
         }
@@ -516,20 +522,19 @@ return RouteLRF;
 //o is ontvangen
 char flipDirection(char old)
 {
-             if(old == 'n'){return 's';}
-        else if(old == 'e'){return 'w';}
-        else if(old == 's'){return 'n';}
-        else if(old == 'w'){return 'e';}
+             if(old == 'N'){return 'S';}
+        else if(old == 'E'){return 'W';}
+        else if(old == 'S'){return 'N';}
+        else if(old == 'W'){return 'E';}
 }
 
-int sendRoute(route *firstroute,Pos Goal)
+int sendRoute(Pos Goal,Pos Source, int begin)
 {
     static HANDLE hSerial;
-    route *route = firstroute;
+    static route *route;
+    route = RoutePlanner(Source,Goal,StartDirection(begin));
     bool mineFlag = false;
     int minePos;
-    int dx = 0;
-    int dy = 0;
     int i = 0;
     /*----------------------------------------------------------
     // Open COMPORT for reading and writing
@@ -586,22 +591,20 @@ int sendRoute(route *firstroute,Pos Goal)
         }  
             if(readByte(hSerial) == '?'){
             printf("Mine Detected\n");
-            Sleep(750);
-            if(route[i].direction == 'n'){dx = -1;}
-        else if(route[i].direction == 'e'){dy = 1;}
-        else if(route[i].direction == 's'){dx = 1;}
-        else if(route[i].direction == 'w'){dy = -1;}
+        addMine((Pos){(route[i].cords.x),(route[i].cords.y)});
+        Algorithm(route[i-1].cords,Goal);
+        printf("New route\n");
         
-        addMine((Pos){(route[minePos].cords.x+dx),(route[i].cords.y+dy)});
-        Algorithm(route[minePos].cords,Goal);
-        route =  RoutePlanner( (Pos)route[minePos].cords, Goal, 
-                   flipDirection((char)route[minePos].direction));
-        for(int i = 0; i<RouteCount; i++)
-            {
-                printf("Instruction %d : %c, direction %c, x: %d, y: %d\n",
-                i+1,route[i].instruction,route[i].direction,route[i].cords.x,route[i].cords.y);
-            }
-                   continue;
+        char newdirection = flipDirection(route[i].direction);
+        Pos lastlocation = route[i-1].cords;
+        printf("new direction : %c, newcord : x: %d, y: %d\n",newdirection,lastlocation.x,lastlocation.y);
+        route = RoutePlanner(lastlocation, Goal, newdirection);
+        i = 1;
+        while(readByte(hSerial) == '?')
+        {
+            
+        }  
+         writeByte(hSerial,&(route)->instruction);   
         }   
                    
                    while(readByte(hSerial) =='o')
@@ -622,18 +625,15 @@ void goTo(int begin, int end){
     Pos Source =  BasetoCord(begin);
     Pos Goal  = BasetoCord(end);
     Algorithm(Source,Goal);
-    static route *route;
-    route = RoutePlanner(Source,Goal,StartDirection(begin));
 
-    PrintMaze();
 
-    sendRoute(route,Goal);
+    sendRoute(Goal,Source,begin);
   
 }
 
 
 int main()
 {
-    goTo(7,9);
+    goTo(6,7);
     return 0;
 }
