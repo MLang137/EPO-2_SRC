@@ -1,22 +1,19 @@
 # 2022 EPO-2 Smart Robot Challenge
 # Mentor group B4.2
-# Pin assignment, 03-06-2022
+# Pin assignment, 10-06-2022
 NET "clk" LOC = "B8";
-NET "reset" LOC = "P11";									# BTN3 (A7) --> P11 (switch) used for reset now
-NET "reset" CLOCK_DEDICATED_ROUTE = FALSE;			# get rid of error
+NET "reset" LOC = "P11";									# switch P11 used for reset
+NET "reset" CLOCK_DEDICATED_ROUTE = FALSE;			# remove error in ISE Project Navigator
 NET "sensor[0]" LOC = "B5";								# IR sensor left
 NET "sensor[1]" LOC = "J3";								# IR sensor middle
 NET "sensor[2]" LOC = "A3";								# IR sensor right
 NET "motor_l_pwm" LOC = "A9";								# servo left
 NET "motor_r_pwm" LOC = "B9";								# servo right
-# NET "route_straight" LOC = L3;							# go straight (now by receiving 'x')
-# NET "route_corner" LOC = K3;							# take a corner (now by receiving 'p' or 't')
-NET "mine_input_tmp" LOC = "A7";								# mine detected
-NET "tx" LOC = "C9";											# connect to xbee
-NET "rx" LOC = "A10";										# connect to xbee
-#NET "maneu_compl" LOC = "P6";								# temp led
-#NET "testsend" LOC = "N3";										# send char via uart
-NET "led[0]" LOC = "G1";
+NET "tx" LOC = "C9";											# connect to XBee
+NET "rx" LOC = "A10";										# connect to XBee
+NET "mine_analog" LOC = "C6";								# analog input signal
+NET "wave_out" LOC = "C5";									# square wave to mine sensor
+NET "led[0]" LOC = "G1";									# all leds indicate the command that is currently being sent through XBee
 NET "led[1]" LOC = "P4";
 NET "led[2]" LOC = "N4";
 NET "led[3]" LOC = "N5";
@@ -24,4 +21,3 @@ NET "led[4]" LOC = "P6";
 NET "led[5]" LOC = "P7";
 NET "led[6]" LOC = "M11";
 NET "led[7]" LOC = "M5";
-#NET "send" LOC = "C11"; # send via uart button

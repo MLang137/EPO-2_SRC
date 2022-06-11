@@ -13,7 +13,7 @@ entity input_converter is
 end entity input_converter;
 
 architecture behavioural of input_converter is
-    signal count, count2 : std_logic_vector(19 downto 0);
+    signal count, count2, new_count, new_count2 : std_logic_vector(19 downto 0);
 signal wester: std_logic;
 	 type motor_controller_state is (counter_on, counter_off);
     signal state, new_state : motor_controller_state;
@@ -25,21 +25,29 @@ begin
 			if(reset = '1') then
 				count <= (others => '0');
 			elsif (mine_analog = '0') then
-				count <= count + '1';
+				count <= new_count;
 			elsif (mine_analog = '1') then
 				count <= (others => '0') ;
 			end if;
 	        end if;
 	end process;
+	process(count)
+    begin
+        new_count <= count + '1';
+    end process;
+	 process(count2)
+    begin
+        new_count2 <= count2 + 1;
+    end process;
 
 	process(count, reset)
 
 	begin
 		if (reset = '1') then 
 			wester <= '0';
-		elsif (to_integer(unsigned(count)) > 2200) then 
+		elsif (to_integer(unsigned(count)) > 5000) then 
 			wester <= '1';
-		elsif (to_integer(unsigned(count)) < 2200) then
+		elsif (to_integer(unsigned(count)) < 5000) then
 			wester <= '0';
 		end if;
 	end process;
@@ -67,7 +75,7 @@ begin
 				end if;
 				when counter_on=>
  					mine_detected <= '1';
-					count2 <= count2 + '1';
+					count2 <= new_count2;
 				if (to_integer(unsigned(count2)) > 10000 and wester ='0') then
 					new_state <= counter_off;
 				else new_state <= counter_on;

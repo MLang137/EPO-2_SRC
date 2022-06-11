@@ -6,24 +6,20 @@ use IEEE.std_logic_1164.all;
 
 entity robot is
 	port (
-		clk         		: in    std_logic;
-		reset           	: in    std_logic;
+		clk         		: in    	std_logic;
+		reset           	: in    	std_logic;
 
-		sensor				: in    std_logic_vector(2 downto 0);
+		sensor				: in    	std_logic_vector(2 downto 0);
+		mine_analog			: in		std_logic;		
+		wave_out				: out		std_logic;
 
-		--route_straight	: in	std_logic; -- 1 to go straight
-		--route_corner		: in	std_logic; -- 1 to turn left, 0 to turn right
-		--mine_analog			: in	std_logic;
-		mine_input_tmp		: in	std_logic; -- remove when mine analog works (sensor plugged in)!
-		--testsend				: in  std_logic;
-		led					: out	std_logic_vector(7 downto 0);
-		--send					: in	std_logic;
+		rx						: in 		std_logic;
+		tx						: out 	std_logic;
+
+		motor_l_pwm     	: out   	std_logic;
+		motor_r_pwm     	: out   	std_logic;
 		
-		rx						: in std_logic;
-		tx						: out std_logic;
-
-		motor_l_pwm     	: out   std_logic;
-		motor_r_pwm     	: out   std_logic
+		led					: out		std_logic_vector(7 downto 0)
 	);
 end entity robot;
 
@@ -32,7 +28,7 @@ architecture structural of robot is
 	component timebase is
 		port (
 			clk				: in	std_logic;
-			reset			: in	std_logic;
+			reset				: in	std_logic;
 
 			count_out		: out	std_logic_vector (19 downto 0)
 		);
@@ -40,7 +36,7 @@ architecture structural of robot is
 
 	component inputbuffer is
         port (
-			clk				: in	std_logic;
+			clk					: in	std_logic;
     
             sensor_l_in		: in	std_logic;
             sensor_m_in		: in	std_logic;
@@ -54,24 +50,24 @@ architecture structural of robot is
 
     component controller is
         port (
-			clk				: in	std_logic;
-            reset			: in	std_logic;
-    
-            sensor_l		: in	std_logic;
-            sensor_m		: in	std_logic;
-            sensor_r		: in	std_logic;
+			clk						: in	std_logic;
+            reset					: in	std_logic;
 
-				route_straight	: in	std_logic;
-				route_corner	: in	std_logic;
-				mine_detected	: in	std_logic;
-				stop				: in	std_logic;
-				maneuver_complete: out	std_logic;
+            sensor_l				: in	std_logic;
+            sensor_m				: in	std_logic;
+            sensor_r				: in	std_logic;
+
+				route_straight		: in	std_logic;
+				route_corner		: in	std_logic;
+				mine_detected		: in	std_logic;
+				stop					: in	std_logic;
+				maneuver_complete	: out	std_logic;
 				
-				uart_read		: out std_logic;
-				uart_write		: out std_logic;
+				uart_read			: out std_logic;
+				uart_write			: out std_logic;
     
-            count_in		: in	std_logic_vector (19 downto 0);
-            count_reset		: out	std_logic;
+            count_in				: in	std_logic_vector (19 downto 0);
+            count_reset			: out	std_logic;
     
             motor_l_reset		: out	std_logic;
             motor_l_direction	: out	std_logic;
@@ -84,10 +80,9 @@ architecture structural of robot is
 	component motorcontrol is
 		port (
 			clk				: in	std_logic;
-			reset			: in	std_logic;
+			reset				: in	std_logic;
 			direction		: in	std_logic;
-			count_in		: in	std_logic_vector (19 downto 0);
-
+			count_in			: in	std_logic_vector (19 downto 0);
 			pwm				: out	std_logic
 		);
 	end component motorcontrol;
@@ -118,6 +113,14 @@ architecture structural of robot is
 			mine_detected 	: out std_logic
 	);
 	end component input_converter;
+	
+	component wave_generator is
+	port (
+		clk			: in	std_logic;
+	   reset			: in	std_logic;
+	   wave_out		: out	std_logic 
+	);
+	end component wave_generator;
 
 	-- Global signal
 	signal count: std_logic_vector(19 downto 0);
@@ -133,25 +136,20 @@ architecture structural of robot is
 	signal uart_data_out_cont: std_logic_vector(7 downto 0);
 	-- Controller to UART
 	signal cont_data_in_uart: std_logic_vector(7 downto 0);
-	-- Analog input to input converter
-	signal mine_analog_inpconv: std_logic;
 	-- Mine detected input converter to controller
 	signal inpconv_mine_detected_cont: std_logic;
-	
-	signal tmp: std_logic;
-	
 
 begin
 	
 	
 	tib: timebase port map	(
 		clk				=> clk,
-		reset			=> cont_reset_tib,
+		reset				=> cont_reset_tib,
 		count_out		=> count
 	);
 
 	buf: inputbuffer port map (
-        clk     		=>  clk,
+        clk     			=>  clk,
         sensor_l_in   	=>  sensor(0),
         sensor_m_in   	=>  sensor(1),
         sensor_r_in   	=>  sensor(2),
@@ -170,10 +168,9 @@ begin
 
 		route_straight		=> uart_data_out_cont(3),
 		route_corner		=> uart_data_out_cont(2),
-		mine_detected		=> mine_input_tmp,--inpconv_mine_detected_cont,
+		mine_detected		=> inpconv_mine_detected_cont,
 		stop					=> uart_data_out_cont(1),
 		maneuver_complete => cont_data_in_uart(6),
-		--mine_output	=> cont_data_in_uart(7),
 
 		uart_write			=> uart_write,
 		uart_read			=> uart_read,
@@ -223,18 +220,32 @@ begin
 	min: input_converter port map (
 			clk				=> clk,
 			reset				=> reset,
-			mine_analog		=> mine_analog_inpconv,
+			mine_analog		=> mine_analog,
 			mine_detected	=> inpconv_mine_detected_cont
+	);
+	
+	wav: wave_generator port map (
+			clk  				=> clk,
+			reset 			=> reset,
+			wave_out			=> wave_out
 	);
 
 	-- Standard data bits (to send readable characters)
 	cont_data_in_uart(5) <= '1';
-	cont_data_in_uart(4) <= '0';
+	cont_data_in_uart(4) <= inpconv_mine_detected_cont; -- mine detected sends '?'
 	cont_data_in_uart(3) <= '1';
 	cont_data_in_uart(2) <= '1';
 	cont_data_in_uart(1) <= '1';
 	cont_data_in_uart(0) <= '1';
-	-- Leds show what bit is being received by the robot.
-	led <= uart_data_out_cont; --cont_data_in_uart;
+
+	-- Leds show what byte is being sent by the robot.
+	led(0) <= cont_data_in_uart(0);
+	led(1) <= cont_data_in_uart(1);
+	led(2) <= cont_data_in_uart(2);
+	led(3) <= cont_data_in_uart(3);
+	led(4) <= cont_data_in_uart(4);
+	led(5) <= cont_data_in_uart(5);
+	led(6) <= cont_data_in_uart(6);
+	led(7) <= cont_data_in_uart(7);
 
 end architecture structural;

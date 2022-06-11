@@ -37,7 +37,7 @@ end entity controller;
 
 architecture sys_operator of controller is
 	
-	type control_state is (rst, ff, fs, fr, sf, rf, turnaround, ss);
+	type control_state is (rst, ff, fs, fr, sf, rf, turnaround, turnaround_mine, ss);
 	-- ff means forward forward, sf means stop foward etc.
 	signal state, new_state: control_state;
 	constant twenty_ms: unsigned := to_unsigned(1000000, 20);
@@ -77,13 +77,14 @@ begin
 					motor_r_reset <= '1';
 					wait_for_line <= '0';
 					if mine_detected = '1' then
+						maneuver_complete <= '0'; -- to send a '?'
 						new_state <= turnaround;
 					elsif sensor_l = '1' and sensor_m = '0' and sensor_r = '0' then
-						new_state <= fs;
+						new_state <= fr; -- was fs
 					elsif sensor_l = '1' and sensor_m = '1' and sensor_r = '0' then
 						new_state <= fr;
 					elsif sensor_l = '0' and sensor_m = '0' and sensor_r = '1' then
-						new_state <= sf;
+						new_state <= rf; -- was sf
 					elsif sensor_l = '0' and sensor_m = '1' and sensor_r = '1' then
 						new_state <= rf;
 					elsif sensor_l = '0' and sensor_m = '0' and sensor_r = '0' then
@@ -202,15 +203,21 @@ begin
 							new_state <= rst;
 						end if;
 					end if;
-				when turnaround => ---TODO if mine detected, send special command via uart
+				when turnaround =>
 					count_reset <= '0';
 					motor_l_direction <= '0';
 					motor_l_reset <= '0';
 					motor_r_direction <= '0';
 					motor_r_reset <= '0';
 					crossing <= '1';
-					if sensor_l = '1' and sensor_m = '0' and sensor_r = '1' then
-						new_state <= rst;
+					if mine_detected = '0' then
+						if sensor_l = '1' and sensor_m = '0' and sensor_r = '1' then
+							new_state <= rst;
+						else
+							new_state <= turnaround;
+						end if;
+					else -- go into special state to wait for line
+						new_state <= turnaround_mine;
 					end if;
 				when ss =>
 					count_reset <= '0';
@@ -219,6 +226,21 @@ begin
 					motor_r_direction <= '0';
 					motor_r_reset <= '1';
 					new_state <= ss;
+				when turnaround_mine =>
+					count_reset <= '0';
+					motor_l_direction <= '0';
+					motor_l_reset <= '0';
+					motor_r_direction <= '0';
+					motor_r_reset <= '0';
+					if unsigned(count_in) >= twenty_ms then
+						if sensor_l = '0' then
+							new_state <= rst;
+						else
+							count_reset <= '1';
+						end if;
+					else
+						new_state <= turnaround_mine;
+					end if;
 			end case;
 		end if;
 	end process;
