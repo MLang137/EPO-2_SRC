@@ -25,7 +25,7 @@ int maze[13][13] =
     //1, 2, 3, 4,5, 6,7, 8,9,10,11,12,13
 };
 int mazecopy[13][13];
-int RouteCount;  
+int RouteCount;
 int runtimes = 0;
 
 /*--------------------------------------------------------------
@@ -81,7 +81,7 @@ char readByte(HANDLE hSerial) {
 
     DWORD dwBytesRead = 0;
     char *buff;
-    buff = calloc('i', sizeof(char)); //initializing array to avoid reading error. 
+    buff = calloc('i', sizeof(char)); //initializing array to avoid reading error.
     if (!ReadFile(hSerial, buff, 1, &dwBytesRead, NULL))
     {
         printf("error reading byte from input buffer \n");
@@ -110,7 +110,7 @@ int writeByte(HANDLE hSerial, char *buffWrite){
 
 
 
-//defining structs for easy point representation. 
+//defining structs for easy point representation.
 struct Pos
 {
     int x;
@@ -146,7 +146,7 @@ void initialize(queue *q)
     q->front = NULL;
     q->rear = NULL;
 }
-//Function to check if the queue is empty. 
+//Function to check if the queue is empty.
 int isempty(queue *q)
 {
     return (q->rear == NULL);
@@ -183,7 +183,7 @@ bool dequeue(queue *q)
     // removing the front node in the queue, then assigning to front pointer to the next node.
     if (q->front == NULL){return false;}
     node *tmp = q->front;
-    
+
     q->front = q->front->next;
     if(q->front == NULL){ q->rear = NULL;}
     q->count--;
@@ -202,7 +202,7 @@ bool TargetReached(Pos Target, Pos pos)
         return false;
     }
 }
- 
+
 //function to add mine if one is detected,
 bool addMine(Pos mine)
 {
@@ -212,7 +212,7 @@ bool addMine(Pos mine)
 
 //switch function to turn the base numbers in actual cordinates.
 Pos BasetoCord(int base)
-{   
+{
     Pos newCord;
     switch(base)
     {
@@ -220,7 +220,7 @@ Pos BasetoCord(int base)
             newCord.x = 12;
             newCord.y = 4;
             break;
-        case 2: 
+        case 2:
             newCord.x = 12;
             newCord.y = 6;
             break;
@@ -266,7 +266,7 @@ Pos BasetoCord(int base)
             break;
         default:
         printf("Please give a basenumber between 1 and 12\n");
-    } 
+    }
             return newCord;
 }
 // creating a array representation of the maze.
@@ -295,7 +295,7 @@ void PrintMaze(){
         for (int j = 0; j < 13; j++){
              printf( " %d \t",mazecopy[i][j]);
         }
-        printf("\n"); 
+        printf("\n");
         printf("\n");
     }
 }
@@ -312,7 +312,7 @@ bool Algorithm(Pos source, Pos goal)
     int dist = 1;
     int dix[4] = {-1,0,0,1};
     int diy[4] = {0,-1,1,0};
-    
+
     copyMaze();
 
     //Creating visited map
@@ -337,7 +337,7 @@ bool Algorithm(Pos source, Pos goal)
         dequeue(q);
 
        for(p = 0; p < 4; p++)
-       {    
+       {
             int row = CurrPos.x + dix[p];
             int col = CurrPos.y + diy[p];
 
@@ -350,14 +350,14 @@ bool Algorithm(Pos source, Pos goal)
                 mazecopy[row][col] = dist+1;
                 Pos Neighbour = {row,col};
                 enqueue(q, Neighbour, dist+1);
-            } 
+            }
        }
     } return false;
 }
 
 char StartDirection(int SourceNum)
 {
-        
+
         if(SourceNum == 1||SourceNum == 2||SourceNum == 3){
             return 'N';
         } else if (SourceNum == 4||SourceNum == 5 ||SourceNum == 6){
@@ -367,7 +367,7 @@ char StartDirection(int SourceNum)
         } else if( SourceNum == 10||SourceNum == 11||SourceNum == 12){
             return 'E';
         }
-    
+
 }
 route * RoutePlanner(Pos Source, Pos Goal, char Direction)
 {
@@ -376,7 +376,7 @@ route * RoutePlanner(Pos Source, Pos Goal, char Direction)
     int p;
     int pdx = 0;
     int pdy = 0;
-    PrintMaze();
+    //PrintMaze();
 
     int count = mazecopy[Source.x][Source.y];
     Pos CurrPos = Source;
@@ -387,7 +387,7 @@ route * RoutePlanner(Pos Source, Pos Goal, char Direction)
 int i = 0;
 while(!TargetReached(Goal,CurrPos)){
        for(p = 0; p < 4; p++)
-       {     
+       {
             int row = CurrPos.x + dix[p];
             int col = CurrPos.y + diy[p];
 
@@ -426,7 +426,7 @@ RouteLRF = (route*)calloc(mazecopy[Source.x][Source.y],sizeof(route));
 for(j =0; j < mazecopy[Source.x][Source.y]; j++)
 {
 
-    
+
     if(Route[j].x == 1){Buffer[j] = 'S';}
      if(Route[j].x == -1){Buffer[j] = 'N';}
       if(Route[j].y == 1){Buffer[j] = 'E';}
@@ -450,9 +450,9 @@ CurrPos.x += Route[0].x;
 CurrPos.y += Route[0].y;
 for(j = 1; j < mazecopy[Source.x][Source.y]; j++){
    // if(j%2 == 0)
-   // {    
+   // {
         if (Buffer[j-1] == Buffer[j]){
-            RouteLRF[RouteCount].instruction = 'x'; 
+            RouteLRF[RouteCount].instruction = 'x';
             RouteLRF[RouteCount].direction = RouteLRF[RouteCount-1].direction;
             RouteLRF[RouteCount].cords.x = CurrPos.x;
             RouteLRF[RouteCount].cords.y = CurrPos.y;
@@ -511,8 +511,8 @@ for(j = 1; j < mazecopy[Source.x][Source.y]; j++){
   // }
         CurrPos.x += Route[j].x;
         CurrPos.y += Route[j].y;
-            
-            
+
+
 }
 
 RouteCount--;
@@ -561,7 +561,7 @@ int sendRoute(Pos Goal,Pos Source, int begin)
     // Initialize the parameters of the COM port
     //----------------------------------------------------------*/
 
-   
+
     initSio(hSerial);
     //Printing all instructions before sending.
     for(int i = 0; i<RouteCount; i++)
@@ -571,11 +571,11 @@ int sendRoute(Pos Goal,Pos Source, int begin)
     }
          char byteBuffer[BUFSIZ+1];
 
-    printf("Press any key to start the navigation.\n");
-    getchar();
-    writeByte(hSerial,&route->instruction); 
+    /*printf("Press any key to start the navigation.\n");
+    getchar();*/
+    writeByte(hSerial,&route->instruction);
     Sleep(20);
-    writeByte(hSerial,&(route+1)->instruction); 
+    writeByte(hSerial,&(route+1)->instruction);
      while(readByte(hSerial) =='o')
                    {
 
@@ -584,17 +584,17 @@ int sendRoute(Pos Goal,Pos Source, int begin)
     {
         Sleep(150);
         writeByte(hSerial,&(route+i)->instruction);
-        
+
         while(readByte(hSerial) == '/')
         {
-            
-        }  
+
+        }
             if(readByte(hSerial) == '?'){
             printf("Mine Detected\n");
         addMine((Pos){(route[i].cords.x),(route[i].cords.y)});
         Algorithm(route[i-1].cords,Goal);
         printf("New route\n");
-        
+
         char newdirection = flipDirection(route[i].direction);
         Pos lastlocation = route[i-1].cords;
         printf("new direction : %c, newcord : x: %d, y: %d\n",newdirection,lastlocation.x,lastlocation.y);
@@ -602,19 +602,19 @@ int sendRoute(Pos Goal,Pos Source, int begin)
         i = 1;
         while(readByte(hSerial) == '?')
         {
-            
-        }  
-         writeByte(hSerial,&(route)->instruction);   
-        }   
-                   
+
+        }
+         writeByte(hSerial,&(route)->instruction);
+        }
+
                    while(readByte(hSerial) =='o')
                    {
 
                    }
-        
-        
+
+
     }
-     
+
 
     CloseHandle(hSerial);
     return 0;
@@ -628,12 +628,168 @@ void goTo(int begin, int end){
 
 
     sendRoute(Goal,Source,begin);
-  
+
 }
 
 
 int main()
 {
-    goTo(6,7);
+    // goTo(6,7); replaced by three stations
+    int S_nr;
+    int G1_nr;
+    int G2_nr;
+    int G3_nr;
+
+    printf("Welcome to the \"MAZE ROUTER\" C program for EPO-2 --- challenge A & B!\n");
+    printf("Made by group B4.2, April-June 2022\n\n");
+	printf("Give source nr, goal 1 nr, goal 2 nr, goal 3 nr:\n");
+	scanf("%d %d %d %d", &S_nr, &G1_nr, &G2_nr, &G3_nr);
+
+	Pos Source = BasetoCord(S_nr);
+	Pos Goal_1 = BasetoCord(G1_nr);
+	Pos Goal_2 = BasetoCord(G2_nr);
+	Pos Goal_3 = BasetoCord(G3_nr);
+
+	/******************************************************************************************************************
+     * Calculate shortest route to visit three goals
+     *****************************************************************************************************************/
+
+    int length_123 = 0, length_132 = 0, length_213 = 0, length_231 = 0, length_312 = 0, length_321 = 0;
+    int ordered_goals_nrs[3] = {G1_nr, G2_nr, G3_nr}; // will be adjusted later if necessary
+
+    // Route S->G1->G2->G3
+    static route *route;
+    Algorithm(Source, Goal_1);
+    route = RoutePlanner(Source, Goal_1, StartDirection(S_nr));
+    length_123 += mazecopy[Source.x][Source.y];
+    Algorithm(Goal_1, Goal_2);
+    route = RoutePlanner(Goal_1, Goal_2, StartDirection(G1_nr));
+    length_123 += mazecopy[Goal_1.x][Goal_1.y];
+    Algorithm(Goal_2, Goal_3);
+    route = RoutePlanner(Goal_2, Goal_3, StartDirection(G2_nr));
+    length_123 += mazecopy[Goal_2.x][Goal_2.y];
+
+    // Route S->G1->G3->G2
+    Algorithm(Source, Goal_1);
+    route = RoutePlanner(Source, Goal_1, StartDirection(S_nr));
+    length_132 += mazecopy[Source.x][Source.y];
+    Algorithm(Goal_1, Goal_3);
+    route = RoutePlanner(Goal_1, Goal_3, StartDirection(G1_nr));
+    length_132 += mazecopy[Goal_1.x][Goal_1.y];
+    Algorithm(Goal_3, Goal_2);
+    route = RoutePlanner(Goal_3, Goal_2, StartDirection(G3_nr));
+    length_132 += mazecopy[Goal_3.x][Goal_3.y];
+
+    // Route S->G2->G1->G3
+    Algorithm(Source, Goal_2);
+    route = RoutePlanner(Source, Goal_2, StartDirection(S_nr));
+    length_213 += mazecopy[Source.x][Source.y];
+    Algorithm(Goal_2, Goal_1);
+    route = RoutePlanner(Goal_2, Goal_1, StartDirection(G2_nr));
+    length_213 += mazecopy[Goal_2.x][Goal_2.y];
+    Algorithm(Goal_1, Goal_3);
+    route = RoutePlanner(Goal_1, Goal_3, StartDirection(G1_nr));
+    length_213 += mazecopy[Goal_1.x][Goal_1.y];
+
+    // Route S->G2->G3->G1
+    Algorithm(Source, Goal_2);
+    route = RoutePlanner(Source, Goal_2, StartDirection(S_nr));
+    length_231 += mazecopy[Source.x][Source.y];
+    Algorithm(Goal_2, Goal_3);
+    route = RoutePlanner(Goal_2, Goal_3, StartDirection(G2_nr));
+    length_231 += mazecopy[Goal_2.x][Goal_2.y];
+    Algorithm(Goal_3, Goal_1);
+    route = RoutePlanner(Goal_3, Goal_1, StartDirection(G3_nr));
+    length_231 += mazecopy[Goal_3.x][Goal_3.y];
+
+    // Route S->G3->G1->G2
+    Algorithm(Source, Goal_3);
+    route = RoutePlanner(Source, Goal_3, StartDirection(S_nr));
+    length_312 += mazecopy[Source.x][Source.y];
+    Algorithm(Goal_3, Goal_1);
+    route = RoutePlanner(Goal_3, Goal_1, StartDirection(G3_nr));
+    length_312 += mazecopy[Goal_3.x][Goal_3.y];
+    Algorithm(Goal_1, Goal_2);
+    route = RoutePlanner(Goal_1, Goal_2, StartDirection(G1_nr));
+    length_312 += mazecopy[Goal_1.x][Goal_1.y];
+
+    // Route S->G3->G2->G1
+    Algorithm(Source, Goal_3);
+    route = RoutePlanner(Source, Goal_3, StartDirection(S_nr));
+    length_321 += mazecopy[Source.x][Source.y];
+    Algorithm(Goal_3, Goal_2);
+    route = RoutePlanner(Goal_3, Goal_2, StartDirection(G3_nr));
+    length_321 += mazecopy[Goal_3.x][Goal_3.y];
+    Algorithm(Goal_2, Goal_1);
+    route = RoutePlanner(Goal_2, Goal_1, StartDirection(G2_nr));
+    length_321 += mazecopy[Goal_2.x][Goal_2.y];
+
+    /* Print total route lengths
+    printf("length123: %d\n", length_123);
+    printf("length132: %d\n", length_132);
+    printf("length213: %d\n", length_213);
+    printf("length231: %d\n", length_231);
+    printf("length312: %d\n", length_312);
+    printf("length321: %d\n", length_321);
+    */
+
+    if (length_132 <= length_123 && length_132 <= length_213 && length_132 <= length_231 &&
+        length_132 <= length_312 && length_132 <= length_321)
+    {
+        ordered_goals_nrs[1] = G3_nr;
+        ordered_goals_nrs[2] = G2_nr;
+    }
+    else if (length_213 <= length_123 && length_213 <= length_132 && length_213 <= length_231 &&
+        length_213 <= length_312 && length_213 <= length_321)
+    {
+        ordered_goals_nrs[0] = G2_nr;
+        ordered_goals_nrs[1] = G1_nr;
+    }
+    else if (length_231 <= length_123 && length_231 <= length_132 && length_231 <= length_213 &&
+        length_231 <= length_312 && length_231 <= length_321)
+    {
+        ordered_goals_nrs[0] = G2_nr;
+        ordered_goals_nrs[1] = G3_nr;
+        ordered_goals_nrs[2] = G1_nr;
+    }
+    else if (length_312 <= length_123 && length_312 <= length_132 && length_312 <= length_213 &&
+        length_312 <= length_231 && length_312 <= length_321)
+    {
+        ordered_goals_nrs[0] = G3_nr;
+        ordered_goals_nrs[1] = G1_nr;
+        ordered_goals_nrs[2] = G2_nr;
+    }
+    else if (length_321 <= length_123 && length_321 <= length_132 && length_321 <= length_213 &&
+        length_321 <= length_231 && length_321 <= length_312)
+    {
+        ordered_goals_nrs[0] = G3_nr;
+        ordered_goals_nrs[2] = G1_nr;
+    }
+    // Goal nrs are put in the correct order now.
+    printf("Fastest route: %d -> %d -> %d -> %d\n",
+           S_nr, ordered_goals_nrs[0], ordered_goals_nrs[1], ordered_goals_nrs[2]);
+    // Go to the goals in the correct order (and do not wait for any character in between routes).
+    printf("Press ENTER to start autonomous navigation!\n");
+    getchar(); // apparently twice is necessary
+    getchar();
+    goTo(S_nr, ordered_goals_nrs[0]);
+    PrintMaze();
+    goTo(ordered_goals_nrs[0], ordered_goals_nrs[1]);
+    PrintMaze();
+    goTo(ordered_goals_nrs[1], ordered_goals_nrs[2]);
+    PrintMaze();
+    // Send a stop command to the robot.
+    char *stop;
+    stop = "z";
+    HANDLE hSerial = CreateFile(COMPORT,
+        GENERIC_READ | GENERIC_WRITE,
+        0,
+        0,
+        OPEN_EXISTING,
+        FILE_ATTRIBUTE_NORMAL,
+        0
+    );
+    writeByte(hSerial, stop);
+    printf("Challenge complete.");
     return 0;
 }
